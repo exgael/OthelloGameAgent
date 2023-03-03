@@ -31,7 +31,6 @@ void printBoard() {
 
 
 bool isValidMove(int x, int y, char player) {
-    std::cerr << "Checking move (" << x << ", " << y << ") for player " << player << std::endl;
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
 
@@ -61,6 +60,8 @@ bool isValidMove(int x, int y, char player) {
 }
 
 void playMove(int x, int y) {
+    // Verify validity of move, print function name
+    std::cerr << "void playMove(int "<<x<<", int "<<y<<")" << std::endl;
     assert( isValidMove(x, y, player) );
     board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
@@ -95,6 +96,7 @@ void playMove(int x, int y) {
 // Change de joueur si l'autre joueur peut jouer, si non le joueur garde la main. Si personne ne peut jouer, retourne false
 bool switchPlayer() {
     char newPlayer = (player == 'X') ? 'O' : 'X';
+    std::cerr << "Switching player from " << player << " to " << newPlayer << std::endl;
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
             if (isValidMove(i, j, newPlayer)) {
@@ -158,6 +160,8 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
             }
         }
     }
+
+    std::cerr << "listDesCoupsPossible() = " << result.size() << std::endl;
 
     return result;
 }
@@ -228,7 +232,7 @@ std::tuple<int, int> chooseMove() {
         int row, col;
         std::tie(row, col) = move;
         playMove(row, col);
-        int eval = alphabeta(depth - 1, -100000, 100000, true);
+        int eval = alphabeta(depth - 1, -100000, 100000, false);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
             maxEval = eval;
@@ -272,6 +276,7 @@ int main(int argc, char *argv[]) {
 
             // CHOISIR LE COUPS A JOUER ////////////
             std::tie(row, col) = chooseMove();
+            std::cerr << "Joue " << row << " " << col << std::endl;
             std::cout << row << col << '\n' << std::flush;
             ////////////////////////////////////////
 
