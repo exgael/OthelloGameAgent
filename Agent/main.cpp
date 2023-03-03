@@ -198,6 +198,9 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
         return scoreX();
     }
 
+    board[3][4] = 'O';
+    board[4][3] = 'O';
+
     if(maximizingPlayer) {
         int maxEval = -100000;
         auto possibleMoves = listDesCoupsPossible();
@@ -272,6 +275,8 @@ std::tuple<int, int> chooseMove() {
         int row, col;
         std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
         std::tie(row, col) = move;
+        board[3][4] = 'O';
+        board[4][3] = 'O';
         playMove(row, col);
         printBoardDebug();
         int eval = alphabeta(depth - 1, -100000, 100000, false);
