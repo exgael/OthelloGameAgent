@@ -6,20 +6,20 @@
 #include <ncurses.h>
 
 
-std::vector<std::vector<char>> board;
+std::vector<std::vector<char>> master_board;
 char player = 'X';
 
 void initBoard() {   
-    board.resize(8, std::vector<char>(8, '-'));
-    board[3][3] = 'X';
-    board[3][4] = 'O';
-    board[4][3] = 'O';
-    board[4][4] = 'X';
+    master_board.resize(8, std::vector<char>(8, '-'));
+    master_board[3][3] = 'X';
+    master_board[3][4] = 'O';
+    master_board[4][3] = 'O';
+    master_board[4][4] = 'X';
 }
 
 void printBoard() {
     clear();
-    for(auto &line: board) {
+    for(auto &line: master_board) {
         for(auto c: line) {
             printw("%c ", c);
         }
@@ -33,7 +33,7 @@ void printBoard() {
 // print board in stderr
 void printBoardDebug() {
     std::cerr << "Board:" << std::endl;
-    for(auto &line: board) {
+    for(auto &line: master_board) {
         for(auto c: line) {
             std::cerr << c << " ";
         }
@@ -43,7 +43,7 @@ void printBoardDebug() {
 }
 
 
-bool isValidMove(int x, int y, char player) {
+bool isValidMove(int x, int y, char player, std::vector<std::vector<char>> board) {
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
 
@@ -72,11 +72,8 @@ bool isValidMove(int x, int y, char player) {
     return false;
 }
 
-void playMove(int x, int y) {
-    // Verify validity of move, print function name
-    std::cerr << "void playMove(int "<<x<<", int "<<y<<")" << std::endl;
-    assert( isValidMove(x, y, player) );
-    std::cerr << "Move can be played!" << std::endl;
+void playMove(int x, int y, std::vector<std::vector<char>> board) {
+    assert( isValidMove(x, y, player, board) );
 
     board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
@@ -108,21 +105,22 @@ void playMove(int x, int y) {
     }
 }
 
+
 // Change de joueur si l'autre joueur peut jouer, si non le joueur garde la main. Si personne ne peut jouer, retourne false
 bool switchPlayer() {
     char newPlayer = (player == 'X') ? 'O' : 'X';
     std::cerr << "Switching player from " << player << " to " << newPlayer << std::endl;
-    for (int i = 0; i < board.size(); i++) {
-        for (int j = 0; j < board[i].size(); j++) {
-            if (isValidMove(i, j, newPlayer)) {
+    for (int i = 0; i < master_board.size(); i++) {
+        for (int j = 0; j < master_board[i].size(); j++) {
+            if (isValidMove(i, j, newPlayer, master_board)) {
                 player = newPlayer;
                 return true;
             }
         }
     }
-    for (int i = 0; i < board.size(); i++) {
-        for (int j = 0; j < board[i].size(); j++) {
-            if (isValidMove(i, j, player)) {
+    for (int i = 0; i < master_board.size(); i++) {
+        for (int j = 0; j < master_board[i].size(); j++) {
+            if (isValidMove(i, j, player, master_board)) {
                 return true;
             }
         }
@@ -135,7 +133,7 @@ int scoreX() {
     int X = 0;
     int O = 0;
 
-    for(auto &line: board) {
+    for(auto &line: master_board) {
         for(auto c: line) {
             X += (c == 'X');
             O += (c == 'O');
@@ -147,7 +145,7 @@ int scoreX() {
 
 void afficherFin() {
     clear();
-    for(auto &line: board) {
+    for(auto &line: master_board) {
         for(auto c: line) {
             printw("%c ", c);
         }
@@ -164,13 +162,13 @@ void afficherFin() {
     refresh();
 }
 
-std::vector< std::tuple<int, int> > listDesCoupsPossible() {
+std::vector< std::tuple<int, int> > listDesCoupsPossible(std::vector<std::vector<char>> board) {
 
     std::vector< std::tuple<int, int> > result;
 
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
-            if (isValidMove(i, j, player)) {
+            if (isValidMove(i, j, player, board)) {
                 result.push_back({i,j});
             }
         }
@@ -180,7 +178,7 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
 }
 
 bool boardFull() {
-    for(auto &line: board) {
+    for(auto &line: master_board) {
         for(auto c: line) {
             if(c == '-') {
                 return false;
@@ -193,30 +191,20 @@ bool boardFull() {
 
 
 
-int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
+int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector<std::vector<char>> board) {
     if(depth == 0 || boardFull()) {
         return scoreX();
     }
 
-    board[3][4] = 'O';
-    board[4][3] = 'O';
-
     if(maximizingPlayer) {
         int maxEval = -100000;
-        auto possibleMoves = listDesCoupsPossible();
-
-        std::cerr << "Depth "<<depth<<", Possible moves: " << std::endl;
-        for(auto &move: possibleMoves) {
-            int row, col;
-            std::tie(row, col) = move;
-            std::cerr << "(" << row << ", " << col << ")" << std::endl;
-        }
+        auto possibleMoves = listDesCoupsPossible(board);
 
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
-            playMove(row, col);
-            int eval = alphabeta(depth - 1, alpha, beta, false);
+            playMove(row, col, board);
+            int eval = alphabeta(depth - 1, alpha, beta, false, board);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             board[row][col] = '-';
@@ -227,21 +215,13 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
         return maxEval;
     } else {
         int minEval = 100000;
-        auto possibleMoves = listDesCoupsPossible();
-
-
-        std::cerr << "Depth "<<depth<<", Possible moves: " << std::endl;
-        for(auto &move: possibleMoves) {
-            int row, col;
-            std::tie(row, col) = move;
-            std::cerr << "(" << row << ", " << col << ")" << std::endl;
-        }
+        auto possibleMoves = listDesCoupsPossible(board);
 
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
-            playMove(row, col);
-            int eval = alphabeta(depth - 1, alpha, beta, true);
+            playMove(row, col, board);
+            int eval = alphabeta(depth - 1, alpha, beta, true, board);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
             board[row][col] = '-';
@@ -254,42 +234,29 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
 }
 
 
-std::tuple<int, int> chooseMove() {
-    std::cerr << "Choosing move..." << std::endl;
+std::tuple<int, int> chooseMove(std::vector<std::vector<char>> board) {
     int depth = 6; // Profondeur maximale de recherche
 
-    auto possibleMoves = listDesCoupsPossible();
+    auto possibleMoves = listDesCoupsPossible(board);
     int maxEval = -100000;
     int bestRow = -1;
     int bestCol = -1;
 
-    // print the list of possible moves
-    std::cerr << "Possible moves: " << std::endl;
     for(auto &move: possibleMoves) {
         int row, col;
         std::tie(row, col) = move;
-        std::cerr << "(" << row << ", " << col << ")" << std::endl;
-    }
 
-    for(auto &move: possibleMoves) {
-        int row, col;
-        std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
-        std::tie(row, col) = move;
-        board[3][4] = 'O';
-        board[4][3] = 'O';
-        playMove(row, col);
-        printBoardDebug();
-        int eval = alphabeta(depth - 1, -100000, 100000, false);
+        // Create a copy of the board before making any changes
+        std::vector<std::vector<char>> board = master_board;
+
+        playMove(row, col, board);
+        int eval = alphabeta(depth - 1, -100000, 100000, false, board);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
             maxEval = eval;
             bestRow = row;
             bestCol = col;
         }
-
-        board[row][col] = '-';
-
-        printBoardDebug();
     }
     std::cerr << "Best move is (" << bestRow << ", " << bestCol << ") with score " << maxEval << std::endl;
     return {bestRow, bestCol};
@@ -322,10 +289,9 @@ int main(int argc, char *argv[]) {
         int col;
 
         if(moi == player) {
-            auto actionsPossible = listDesCoupsPossible();
 
             // CHOISIR LE COUPS A JOUER ////////////
-            std::tie(row, col) = chooseMove();
+            std::tie(row, col) = chooseMove(master_board);
             std::cerr << "Joue " << row << " " << col << std::endl;
             std::cout << row << col << '\n' << std::flush;
             ////////////////////////////////////////
@@ -338,8 +304,8 @@ int main(int argc, char *argv[]) {
             col =  coups[1]-'0';
         }
 
-        if (isValidMove(row, col, player)) {
-            playMove(row, col);
+        if (isValidMove(row, col, player, master_board)) {
+            playMove(row, col, master_board);
             if(!switchPlayer()) {
                 break;
             }
