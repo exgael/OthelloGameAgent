@@ -44,6 +44,8 @@ void printBoardDebug() {
 
 
 bool isValidMove(int x, int y, char player) {
+    std::cerr << "bool isValidMove(int "<<x<<", int "<<y<<", char "<<player<<")" << std::endl;
+
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
 
@@ -176,8 +178,6 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
         }
     }
 
-    std::cerr << "listDesCoupsPossible() = " << result.size() << std::endl;
-
     return result;
 }
 
@@ -203,6 +203,14 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
     if(maximizingPlayer) {
         int maxEval = -100000;
         auto possibleMoves = listDesCoupsPossible();
+
+        std::cerr << "Depth "<<depth<<", Possible moves: " << std::endl;
+        for(auto &move: possibleMoves) {
+            int row, col;
+            std::tie(row, col) = move;
+            std::cerr << "(" << row << ", " << col << ")" << std::endl;
+        }
+
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
@@ -219,6 +227,15 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
     } else {
         int minEval = 100000;
         auto possibleMoves = listDesCoupsPossible();
+
+
+        std::cerr << "Depth "<<depth<<", Possible moves: " << std::endl;
+        for(auto &move: possibleMoves) {
+            int row, col;
+            std::tie(row, col) = move;
+            std::cerr << "(" << row << ", " << col << ")" << std::endl;
+        }
+        
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
