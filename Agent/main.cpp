@@ -8,7 +8,6 @@
 
 std::vector<std::vector<char>> board;
 char player = 'X';
-std::vector<std::vector<char>> boardCopy;
 
 void initBoard() {   
     board.resize(8, std::vector<char>(8, '-'));
@@ -192,7 +191,7 @@ bool boardFull() {
 
 
 
-int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector<std::vector<char>> &board_) {
+int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector<std::vector<char>> board_) {
     if(depth == 0 || boardFull()) {
         return scoreX();
     }
