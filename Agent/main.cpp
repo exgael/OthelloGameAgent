@@ -44,8 +44,6 @@ void printBoardDebug() {
 
 
 bool isValidMove(int x, int y, char player) {
-    std::cerr << "bool isValidMove(int "<<x<<", int "<<y<<", char "<<player<<")" << std::endl;
-
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
 
@@ -235,7 +233,7 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
             std::tie(row, col) = move;
             std::cerr << "(" << row << ", " << col << ")" << std::endl;
         }
-        
+
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
@@ -255,9 +253,6 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
 
 std::tuple<int, int> chooseMove() {
     std::cerr << "Choosing move..." << std::endl;
-
-    // print board
-
     int depth = 6; // Profondeur maximale de recherche
 
     auto possibleMoves = listDesCoupsPossible();
@@ -275,8 +270,10 @@ std::tuple<int, int> chooseMove() {
 
     for(auto &move: possibleMoves) {
         int row, col;
+        std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
         std::tie(row, col) = move;
         playMove(row, col);
+        printBoardDebug();
         int eval = alphabeta(depth - 1, -100000, 100000, false);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
@@ -284,8 +281,6 @@ std::tuple<int, int> chooseMove() {
             bestRow = row;
             bestCol = col;
         }
-
-        printBoardDebug();
 
         board[row][col] = '-';
 
