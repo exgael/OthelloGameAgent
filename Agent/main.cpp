@@ -30,6 +30,19 @@ void printBoard() {
 }
 
 
+// print board in stderr
+void printBoardDebug() {
+    std::cerr << "Board:" << std::endl;
+    for(auto &line: board) {
+        for(auto c: line) {
+            std::cerr << c << " ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Player: " << player << std::endl;
+}
+
+
 bool isValidMove(int x, int y, char player) {
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
@@ -255,11 +268,11 @@ std::tuple<int, int> chooseMove() {
             bestCol = col;
         }
 
-        printBoard();
+        printBoardDebug();
 
         board[row][col] = '-';
 
-        printBoard();
+        printBoardDebug();
     }
     std::cerr << "Best move is (" << bestRow << ", " << bestCol << ") with score " << maxEval << std::endl;
     return {bestRow, bestCol};
