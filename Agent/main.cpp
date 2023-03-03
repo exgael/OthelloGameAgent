@@ -223,15 +223,6 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
 }
 
 
-void printBoard() {
-    for(auto &line: board) {
-        for(auto c: line) {
-            std::cerr << c << " ";
-        }
-        std::cerr << std::endl;
-    }
-}
-
 std::tuple<int, int> chooseMove() {
     std::cerr << "Choosing move..." << std::endl;
 
