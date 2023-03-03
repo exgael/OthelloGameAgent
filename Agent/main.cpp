@@ -31,6 +31,7 @@ void printBoard() {
 
 
 bool isValidMove(int x, int y, char player) {
+    std::cout << "Checking move (" << x << ", " << y << ") for player " << player << std::endl;
     if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
     if (board[x][y] != '-') return false;  // Vérifier si la case est vide
 
@@ -228,6 +229,7 @@ std::tuple<int, int> chooseMove() {
         std::tie(row, col) = move;
         playMove(row, col);
         int eval = alphabeta(depth - 1, -100000, 100000, false);
+        std::cout << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
             maxEval = eval;
             bestRow = row;
@@ -235,7 +237,7 @@ std::tuple<int, int> chooseMove() {
         }
         board[row][col] = '-';
     }
-
+    std::cout << "Best move is (" << bestRow << ", " << bestCol << ") with score " << maxEval << std::endl;
     return {bestRow, bestCol};
 }
 
