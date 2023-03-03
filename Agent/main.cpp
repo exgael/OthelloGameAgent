@@ -228,7 +228,7 @@ std::tuple<int, int> chooseMove() {
         int row, col;
         std::tie(row, col) = move;
         playMove(row, col);
-        int eval = alphabeta(depth - 1, -100000, 100000, false);
+        int eval = alphabeta(depth - 1, -100000, 100000, true);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
             maxEval = eval;
