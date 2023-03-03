@@ -222,16 +222,20 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
     }
 }
 
-std::tuple<int, int> chooseMove() {
-    std::cerr << "Choosing move..." << std::endl;
 
-    // print board
+void printBoard() {
     for(auto &line: board) {
         for(auto c: line) {
             std::cerr << c << " ";
         }
         std::cerr << std::endl;
     }
+}
+
+std::tuple<int, int> chooseMove() {
+    std::cerr << "Choosing move..." << std::endl;
+
+    // print board
 
     int depth = 6; // Profondeur maximale de recherche
 
@@ -239,6 +243,14 @@ std::tuple<int, int> chooseMove() {
     int maxEval = -100000;
     int bestRow = -1;
     int bestCol = -1;
+
+    // print the list of possible moves
+    std::cerr << "Possible moves: " << std::endl;
+    for(auto &move: possibleMoves) {
+        int row, col;
+        std::tie(row, col) = move;
+        std::cerr << "(" << row << ", " << col << ")" << std::endl;
+    }
 
     for(auto &move: possibleMoves) {
         int row, col;
@@ -251,7 +263,12 @@ std::tuple<int, int> chooseMove() {
             bestRow = row;
             bestCol = col;
         }
+
+        printBoard();
+
         board[row][col] = '-';
+
+        printBoard();
     }
     std::cerr << "Best move is (" << bestRow << ", " << bestCol << ") with score " << maxEval << std::endl;
     return {bestRow, bestCol};
