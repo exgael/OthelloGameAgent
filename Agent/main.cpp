@@ -63,6 +63,8 @@ void playMove(int x, int y) {
     // Verify validity of move, print function name
     std::cerr << "void playMove(int "<<x<<", int "<<y<<")" << std::endl;
     assert( isValidMove(x, y, player) );
+    std::cerr << "Move can be played!" << std::endl;
+
     board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
     // Vérifier les huit directions autour de la case
@@ -221,6 +223,16 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
 }
 
 std::tuple<int, int> chooseMove() {
+    std::cerr << "Choosing move..." << std::endl;
+
+    // print board
+    for(auto &line: board) {
+        for(auto c: line) {
+            std::cerr << c << " ";
+        }
+        std::cerr << std::endl;
+    }
+
     int depth = 6; // Profondeur maximale de recherche
 
     auto possibleMoves = listDesCoupsPossible();
