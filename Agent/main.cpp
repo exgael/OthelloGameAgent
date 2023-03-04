@@ -248,7 +248,6 @@ std::tuple<int, int> chooseMove() {
         int row, col;
       
         std::tie(row, col) = move;
-        std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
         std::vector<std::vector<char>> board_copy = board;
         playMove(row, col, board_copy);
         
