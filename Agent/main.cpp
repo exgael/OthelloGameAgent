@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <ncurses.h>
+#include <unistd.h>
 
 
 std::vector<std::vector<char>> board;
@@ -313,6 +314,10 @@ int main(int argc, char *argv[]) {
             std::cerr << "ERREUR: coups " << row << " " << col << " est invalide !" << std::endl;
             return 0;
         }
+
+        // sleep 1 second
+          sleep(2);
+        
     }
 
     return 0;
