@@ -75,7 +75,7 @@ bool isValidMove(int x, int y, char player, std::vector<std::vector<char>> board
 void playMove(int x, int y,  std::vector<std::vector<char>> &board_ ) {
     assert( isValidMove(x, y, player, board_) );
 
-    board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
+    board_[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
     // Vérifier les huit directions autour de la case
     for (int i = -1; i <= 1; i++) {
@@ -86,14 +86,14 @@ void playMove(int x, int y,  std::vector<std::vector<char>> &board_ ) {
             while (true) {
                 int newX = x + i * k;
                 int newY = y + j * k;
-                if (newX < 0 || newX >= board.size() || newY < 0 || newY >= board[newX].size()) break;  // Sortir si on est en dehors du plateau
-                if (board[newX][newY] == '-') break;  // Sortir si la case est vide
-                if (board[newX][newY] == player) {
+                if (newX < 0 || newX >= board_.size() || newY < 0 || newY >= board_[newX].size()) break;  // Sortir si on est en dehors du plateau
+                if (board_[newX][newY] == '-') break;  // Sortir si la case est vide
+                if (board_[newX][newY] == player) {
                     if (k > 1) {
                         for(int k2 = k-1; k2 > 0; k2--) {
                             int newX = x + i * k2;
                             int newY = y + j * k2;
-                            board[newX][newY] = player;
+                            board_[newX][newY] = player;
                         }
                         break;
                     }
