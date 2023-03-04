@@ -246,14 +246,15 @@ std::tuple<int, int> chooseMove() {
 
     for(auto &move: possibleMoves) {
         int row, col;
-        std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
+      
         std::tie(row, col) = move;
+        std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
         std::vector<std::vector<char>> board_copy = board;
         playMove(row, col, board_copy);
         
         int eval = alphabeta(depth - 1, -100000, 100000, false, board_copy);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
-        if(eval > maxEval) {
+        if(eval >= maxEval) {
             maxEval = eval;
             bestRow = row;
             bestCol = col;
