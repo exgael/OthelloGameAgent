@@ -107,7 +107,7 @@ void playMove(int x, int y,  std::vector<std::vector<char>> &board_ ) {
 
 
 // Change de joueur si l'autre joueur peut jouer, si non le joueur garde la main. Si personne ne peut jouer, retourne false
-bool switchPlayer(std::vector<std::vector<char>> board_) {
+bool switchPlayer(std::vector<std::vector<char>> &board_) {
     char newPlayer = (player == 'X') ? 'O' : 'X';
     std::cerr << "Switching player from " << player << " to " << newPlayer << std::endl;
     for (int i = 0; i < board_.size(); i++) {
@@ -191,13 +191,12 @@ bool boardFull() {
 
 
 
-int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector<std::vector<char>> &board_) {
+int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector<std::vector<char>> board_) {
     if(depth == 0 || boardFull()) {
         return scoreX();
     }
 
     // copy the board_
-    std::vector<std::vector<char>> board_copy = board_;
 
     if(maximizingPlayer) {
         int maxEval = -100000;
@@ -208,8 +207,8 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector
             std::tie(row, col) = move;
 
             
-            playMove(row, col, board_copy);
-            int eval = alphabeta(depth - 1, alpha, beta, false, board_copy);
+            playMove(row, col, board_);
+            int eval = alphabeta(depth - 1, alpha, beta, false, board_);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             if(beta <= alpha) {
@@ -219,13 +218,13 @@ int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer, std::vector
         return maxEval;
     } else {
         int minEval = 100000;
-        auto possibleMoves = listDesCoupsPossible(board_copy);
+        auto possibleMoves = listDesCoupsPossible(board_);
 
         for(auto &move: possibleMoves) {
             int row, col;
             std::tie(row, col) = move;
-            playMove(row, col, board_copy);
-            int eval = alphabeta(depth - 1, alpha, beta, true, board_copy);
+            playMove(row, col, board_);
+            int eval = alphabeta(depth - 1, alpha, beta, true, board_);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
             if(beta <= alpha) {
