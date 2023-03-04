@@ -249,12 +249,9 @@ std::tuple<int, int> chooseMove() {
         int row, col;
         std::cerr << "Trying move (" << row << ", " << col << ")" << std::endl;
         std::tie(row, col) = move;
-        playMove(row, col, board);
-        printBoardDebug();
-
-        // deep copy board to board_copy
         std::vector<std::vector<char>> board_copy = board;
-
+        playMove(row, col, board_copy);
+        
         int eval = alphabeta(depth - 1, -100000, 100000, false, board_copy);
         std::cerr << "Move (" << row << ", " << col << ") has score " << eval << std::endl;
         if(eval > maxEval) {
@@ -262,8 +259,6 @@ std::tuple<int, int> chooseMove() {
             bestRow = row;
             bestCol = col;
         }
-
-        printBoardDebug();
     }
     std::cerr << "Best move is (" << bestRow << ", " << bestCol << ") with score " << maxEval << std::endl;
     return {bestRow, bestCol};
@@ -296,8 +291,6 @@ int main(int argc, char *argv[]) {
         int col;
 
         if(moi == player) {
-            auto actionsPossible = listDesCoupsPossible(board);
-
             // CHOISIR LE COUPS A JOUER ////////////
             std::tie(row, col) = chooseMove();
             std::cerr << "Joue " << row << " " << col << std::endl;
