@@ -178,7 +178,8 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    rdm_id = rand();
+    // Initialisation with random value with 1 nano sec diff
+    rdm_id = time(NULL);
     std::cerr << "Main launch with Id: " << rdm_id << std::endl;
 
     char moi = argv[1][0];
