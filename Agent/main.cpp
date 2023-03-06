@@ -275,7 +275,7 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
 // chose_move
 std::tuple<int, int> choose_move(std::vector<std::vector<char>>&simulated_board) {
     int best_score = -1000;
-    int depth = 3;
+    int depth = 6;
     std::tuple<int, int> best_move = {-1,-1};
     auto moves = move_candidates(simulated_board);
     for (auto move : moves) {
