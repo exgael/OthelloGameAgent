@@ -61,6 +61,46 @@ bool isValidMove(int x, int y, char player) {
     return false;
 }
 
+std::vector<std::vector<char>> simulate_move(
+    std::vector<std::vector<char>>&board_passed, 
+    std::tuple<int, int> move) {
+    int x = std::get<0>(move);
+    int y = std::get<1>(move);
+
+
+    auto sim = board_passed;
+    sim[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
+
+    // Vérifier les huit directions autour de la case
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            if (i == 0 && j == 0) continue;  // On ignore la case actuelle
+
+            int k = 1;
+            while (true) {
+                int newX = x + i * k;
+                int newY = y + j * k;
+                if (newX < 0 || newX >= sim.size() || newY < 0 || newY >= sim[newX].size()) break;  // Sortir si on est en dehors du plateau
+                if (sim[newX][newY] == '-') break;  // Sortir si la case est vide
+                if (sim[newX][newY] == player) {
+                    if (k > 1) {
+                        for(int k2 = k-1; k2 > 0; k2--) {
+                            int newX = x + i * k2;
+                            int newY = y + j * k2;
+                            sim[newX][newY] = player;
+                        }
+                        break;
+                    }
+                    break;
+                }
+                k++;
+            }
+        }
+    }
+
+    return sim;
+}
+
 void playMove(int x, int y) {
     std::cerr << "Id: " << rdm_id << " Player " << player << " joue en " << x << " " << y << std::endl;
     assert( isValidMove(x, y, player) );
@@ -130,6 +170,55 @@ int scoreX() {
     return X-O;
 }
 
+int alpha_beta(
+    std::vector<std::vector<char>>&simulated_board, 
+    bool is_max, 
+    int depth, 
+    int alpha, 
+    int beta) {
+
+        // Stop searching if we have reached the maximum depth
+        if (depth == 0) {
+            return scoreX();
+        }
+
+        // Maximizer's turn
+        if (is_max) {
+            int best_score = -1000;
+
+            auto moves = move_candidates(simulated_board);
+
+            // try all moves
+
+            for (auto move : moves) {
+                auto new_board = simulate_move(simulated_board, move);
+                int score = alpha_beta(new_board, false, depth - 1, alpha, beta);
+                best_score = std::max(best_score, score);
+                alpha = std::max(alpha, best_score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return best_score;
+        }
+        //  Minimizer's turn  
+        else {
+            int best_score = 1000;
+            auto moves = move_candidates(simulated_board);
+            for (auto move : moves) {
+                auto new_board = simulate_move(simulated_board, move);
+                int score = alpha_beta(new_board, true, depth - 1, alpha, beta);
+                best_score = std::min(best_score, score);
+                beta = std::min(beta, best_score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return best_score;
+        }
+
+}
+
 void afficherFin() {
     clear();
     for(auto &line: board) {
@@ -164,6 +253,40 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
     return result;
 }
 
+
+
+std::vector< std::tuple<int, int> > move_candidates(
+    std::vector<std::vector<char>>&simulated_board) {
+
+    std::vector< std::tuple<int, int> > result;
+    for (int i = 0; i < simulated_board.size(); i++) {
+        for (int j = 0; j < simulated_board[i].size(); j++) {
+            if (isValidMove(i, j, player)) {
+                result.push_back({i,j});
+            }
+        }
+    }
+
+    return result;
+}
+
+// chose_move
+std::tuple<int, int> choose_move(std::vector<std::vector<char>>&simulated_board) {
+    int best_score = -1000;
+    int depth = 3;
+    std::tuple<int, int> best_move = {-1,-1};
+    auto moves = move_candidates(simulated_board);
+    for (auto move : moves) {
+        auto new_board = simulate_move(simulated_board, move);
+        int score = alpha_beta(new_board, false, depth -1, -1000, 1000);
+        if (score > best_score) {
+            best_score = score;
+            best_move = move;
+        }
+    }
+    return best_move;
+} 
+
 int main(int argc, char *argv[]) {
 
     if( argc != 2 ) {
@@ -192,10 +315,10 @@ int main(int argc, char *argv[]) {
         int col;
 
         if(moi == player) {
-            auto actionsPossible = listDesCoupsPossible();
+          //  auto actionsPossible = listDesCoupsPossible();
 
             // TODO : CHOISIR LE COUPS A JOUER ////////////
-            std::tie(row, col) = actionsPossible[ rand()%actionsPossible.size() ];  // Choix aléatoire
+            std::tie(row, col) = choose_move(board);  //actionsPossible[ rand()%actionsPossible.size() ];  // Choix aléatoire
             std::cout << row << col << '\n' << std::flush;
             //////////////////////////////////////////////
 
