@@ -281,6 +281,8 @@ std::tuple<int, int> choose_move(std::vector<std::vector<char>>&simulated_board)
     for (auto move : moves) {
         auto new_board = simulate_move(simulated_board, move);
         int score = alpha_beta(new_board, false, depth -1, -1000, 1000);
+        // print move and score
+        std::cerr << "Move: " << std::get<0>(move) << " " << std::get<1>(move) << " Score: " << score << std::endl;
         if (score > best_score) {
             best_score = score;
             best_move = move;
