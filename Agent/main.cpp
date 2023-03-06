@@ -60,6 +60,7 @@ bool isValidMove(int x, int y, char player) {
 }
 
 void playMove(int x, int y) {
+    std::cerr << "Player " << player << " joue en " << x << " " << y << std::endl;
     assert( isValidMove(x, y, player) );
     board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
