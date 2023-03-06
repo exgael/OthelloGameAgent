@@ -170,6 +170,21 @@ int scoreX() {
     return X-O;
 }
 
+std::vector< std::tuple<int, int> > move_candidates(
+    std::vector<std::vector<char>>&simulated_board) {
+
+    std::vector< std::tuple<int, int> > result;
+    for (int i = 0; i < simulated_board.size(); i++) {
+        for (int j = 0; j < simulated_board[i].size(); j++) {
+            if (isValidMove(i, j, player)) {
+                result.push_back({i,j});
+            }
+        }
+    }
+
+    return result;
+}
+
 int alpha_beta(
     std::vector<std::vector<char>>&simulated_board, 
     bool is_max, 
@@ -255,20 +270,7 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
 
 
 
-std::vector< std::tuple<int, int> > move_candidates(
-    std::vector<std::vector<char>>&simulated_board) {
 
-    std::vector< std::tuple<int, int> > result;
-    for (int i = 0; i < simulated_board.size(); i++) {
-        for (int j = 0; j < simulated_board[i].size(); j++) {
-            if (isValidMove(i, j, player)) {
-                result.push_back({i,j});
-            }
-        }
-    }
-
-    return result;
-}
 
 // chose_move
 std::tuple<int, int> choose_move(std::vector<std::vector<char>>&simulated_board) {
