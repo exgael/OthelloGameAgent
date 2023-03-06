@@ -5,6 +5,8 @@
 #include <tuple>
 #include <ncurses.h>
 
+// rdm id generated
+int rdm_id; 
 
 std::vector<std::vector<char>> board;
 char player = 'X';
@@ -60,7 +62,7 @@ bool isValidMove(int x, int y, char player) {
 }
 
 void playMove(int x, int y) {
-    std::cerr << "Player " << player << " joue en " << x << " " << y << std::endl;
+    std::cerr << "Id: " << rdm_id << " Player " << player << " joue en " << x << " " << y << std::endl;
     assert( isValidMove(x, y, player) );
     board[x][y] = player;  // Placer la pièce du joueur actuel sur la case choisie
 
@@ -175,6 +177,8 @@ int main(int argc, char *argv[]) {
         std::cerr << argv[0] << " [X|O]" << std::endl;
         return 0;
     }
+
+    rdm_id = rand();
 
     char moi = argv[1][0];
 
