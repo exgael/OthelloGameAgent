@@ -179,6 +179,7 @@ int main(int argc, char *argv[]) {
     }
 
     rdm_id = rand();
+    std::cerr << "Main launch with Id: " << rdm_id << std::endl;
 
     char moi = argv[1][0];
 
