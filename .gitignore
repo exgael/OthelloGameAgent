@@ -12,6 +12,7 @@ BaseAgent/BaseAgent
 **/.pytest_cache/**
 
 .vscode/
+**/build/
 
 
 # Dump file
