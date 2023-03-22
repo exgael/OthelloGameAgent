@@ -11,6 +11,8 @@ BaseAgent/src/**/**
 BaseAgent/BaseAgent
 **/.pytest_cache/**
 
+.vscode/
+
 
 # Dump file
 *.stackdump
