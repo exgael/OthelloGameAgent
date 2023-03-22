@@ -14,9 +14,7 @@ cd build
 # Run make to compile the project
 make
 
-# Change to the tests directory
-cd ../tests
-
 # Run the tests
-./test.sh
+ctest
+
 

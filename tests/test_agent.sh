@@ -8,7 +8,7 @@ for i in $(seq 1 $num_tests); do
     echo "Running test $i"
     log_file="test_${i}.log"
     # Run the program and save the output to test.log, save the exit status in a variable
-    (../build/src/codeEnv/codeEnv -X ../build/src/Agent/Agent -O ../build/src/BaseAgent/BaseAgent --noGUI > $log_file 2>&1) >/dev/null 2>&1
+    (../src/codeEnv/codeEnv -X ../src/Agent/Agent -O ../src/BaseAgent/BaseAgent --noGUI > $log_file 2>&1) >/dev/null 2>&1
 
 
     exit_status=$?
@@ -37,4 +37,5 @@ if [ $failed_tests -eq 0 ]; then
     echo "All tests passed. The program is stable."
 else
     echo "Some tests failed. The program is unstable."
+    exit 1
 fi
