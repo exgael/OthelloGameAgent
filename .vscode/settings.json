@@ -68,6 +68,9 @@
         "map": "cpp",
         "numeric": "cpp",
         "set": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "*.tcc": "cpp",
+        "numbers": "cpp",
+        "utility": "cpp"
     }
 }
