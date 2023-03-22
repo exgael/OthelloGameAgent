@@ -8,7 +8,8 @@ file(
         GLOB
 	source_files
 	main.cpp
-        src/*
+        src/*.cpp
+        src/*.h
 )
 
 set(localLibs
