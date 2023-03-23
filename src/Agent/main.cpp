@@ -15,7 +15,11 @@ int main(int argc, char *argv[]) {
     }
 
     moi = argv[1][0];
-    std::cerr <<  "Je suis: "<<  moi << std::endl;
+
+    if ( verbose ) {
+        std::cerr <<  "Je suis: "<<  moi << std::endl;
+    }
+    
     lui = moi == 'X' ? 'O' : 'X';
 
     srand(time(NULL));

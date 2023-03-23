@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 #include "agent.h"
 
-#include <gtest/gtest.h>
-#include "agent.h"
-
 // Test the initBoard function
 TEST(AgentTest, InitBoard) {
     initBoard();
