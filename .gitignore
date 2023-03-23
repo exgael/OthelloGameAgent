@@ -5,6 +5,16 @@ Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
 
+**/Env
+Agent/src/**
+BaseAgent/src/**/**
+BaseAgent/BaseAgent
+**/.pytest_cache/**
+
+.vscode/
+**/build/
+
+
 # Dump file
 *.stackdump
 

@@ -161,87 +161,6 @@ std::vector< std::tuple<int, int> > listDesCoupsPossible() {
     return result;
 }
 
-bool boardFull() {
-    for(auto &line: board) {
-        for(auto c: line) {
-            if(c == '-') {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-
-
-
-int alphabeta(int depth, int alpha, int beta, bool maximizingPlayer) {
-    if(depth == 0 || boardFull()) {
-        return scoreX();
-    }
-
-    if(maximizingPlayer) {
-        int maxEval = -100000;
-        auto possibleMoves = listDesCoupsPossible();
-        for(auto &move: possibleMoves) {
-            int row, col;
-            std::tie(row, col) = move;
-            playMove(row, col);
-            int eval = alphabeta(depth - 1, alpha, beta, false);
-            maxEval = std::max(maxEval, eval);
-            alpha = std::max(alpha, eval);
-            board[row][col] = '-';
-            if(beta <= alpha) {
-                break;
-            }
-        }
-        return maxEval;
-    } else {
-        int minEval = 100000;
-        auto possibleMoves = listDesCoupsPossible();
-        for(auto &move: possibleMoves) {
-            int row, col;
-            std::tie(row, col) = move;
-            playMove(row, col);
-            int eval = alphabeta(depth - 1, alpha, beta, true);
-            minEval = std::min(minEval, eval);
-            beta = std::min(beta, eval);
-            board[row][col] = '-';
-            if(beta <= alpha) {
-                break;
-            }
-        }
-        return minEval;
-    }
-}
-
-std::tuple<int, int> chooseMove() {
-    int depth = 6; // Profondeur maximale de recherche
-
-    auto possibleMoves = listDesCoupsPossible();
-    int maxEval = -100000;
-    int bestRow = -1;
-    int bestCol = -1;
-
-    for(auto &move: possibleMoves) {
-        int row, col;
-        std::tie(row, col) = move;
-        playMove(row, col);
-        int eval = alphabeta(depth - 1, -100000, 100000, false);
-        if(eval > maxEval) {
-            maxEval = eval;
-            bestRow = row;
-            bestCol = col;
-        }
-        board[row][col] = '-';
-    }
-
-    return {bestRow, bestCol};
-}
-
-
-
-
 int main(int argc, char *argv[]) {
 
     if( argc != 2 ) {
@@ -268,10 +187,10 @@ int main(int argc, char *argv[]) {
         if(moi == player) {
             auto actionsPossible = listDesCoupsPossible();
 
-            // CHOISIR LE COUPS A JOUER ////////////
-            std::tie(row, col) = chooseMove();
+            // TODO : CHOISIR LE COUPS A JOUER ////////////
+            std::tie(row, col) = actionsPossible[ rand()%actionsPossible.size() ];  // Choix aléatoire
             std::cout << row << col << '\n' << std::flush;
-            ////////////////////////////////////////
+            //////////////////////////////////////////////
 
         } else {
             std::string coups;
