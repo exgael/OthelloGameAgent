@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
                 }
             }
             std::tie(row, col) = bestMove;
-            std::cout << row << col << '\n' << std::flush;
+            std::cout << -1 << -1 << '\n' << std::flush;
 
             
 
