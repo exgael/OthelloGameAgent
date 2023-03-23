@@ -15,6 +15,6 @@ cd build
 make
 
 # Run the tests
-ctest
+make test
 
 

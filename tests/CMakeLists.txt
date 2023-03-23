@@ -1,8 +1,19 @@
 enable_testing()
 
-add_test(NAME test_1 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 1)
-add_test(NAME test_2 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 2)
-add_test(NAME test_3 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 3)
-add_test(NAME test_4 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 4)
-add_test(NAME test_5 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 5)
-add_test(NAME test_6 COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/test_agent.sh 6)
+
+add_executable(test_agent
+  test_agent.cpp
+)
+target_link_libraries(test_agent
+  core_agent
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(test_agent)
+
+configure_file(test_othello_game.sh.in test_othello_game.sh)
+
+add_test(NAME test_othello_game
+  COMMAND test_othello_game.sh 1
+)

@@ -1,9 +1,4 @@
-#include <iostream>
-#include <cstdlib>
-#include <cassert>
-#include <vector>
-#include <tuple>
-//#include <ncurses.h>
+#include "agent.h"
 
 using Board = std::vector<std::vector<char>>;
 

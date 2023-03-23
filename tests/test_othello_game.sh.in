@@ -6,7 +6,7 @@ log_file="test_${test_num}.log"
 echo "Running test $test_num"
 
 # Run the program and save the output to test.log, save the exit status in a variable
-(../src/codeEnv/codeEnv -X ../src/Agent/Agent -O ../src/BaseAgent/BaseAgent --noGUI > $log_file 2>&1) >/dev/null 2>&1
+(../bin/environment -X ../bin/agent -O ../bin/base_agent --noGUI > $log_file 2>&1) >/dev/null 2>&1
 
 exit_status=$?
 
