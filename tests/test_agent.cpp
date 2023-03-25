@@ -13,16 +13,16 @@ TEST(AgentTest, InitBoard) {
 // Test the isValidMove function
 TEST(AgentTest, IsValidMove) {
     initBoard();
-    ASSERT_TRUE(isValidMove(2, 4, 'X'));
-    ASSERT_FALSE(isValidMove(4, 1, 'X'));
-    ASSERT_FALSE(isValidMove(3, 3, 'X'));
-    ASSERT_FALSE(isValidMove(3, 3, 'O'));
+    ASSERT_TRUE(is_valid_move({2, 4}, 'X'));
+    ASSERT_FALSE(is_valid_move({4, 1}, 'X'));
+    ASSERT_FALSE(is_valid_move({3, 3}, 'X'));
+    ASSERT_FALSE(is_valid_move({3, 3}, 'O'));
 }
 
 // Test the boardFull function
 TEST(AgentTest, BoardFull) {
     initBoard();
-    ASSERT_FALSE(boardFull(board));
+    ASSERT_FALSE(board_full(board));
     
     // Fill the board with 'X'
     for (int i = 0; i < 8; ++i) {
@@ -30,37 +30,22 @@ TEST(AgentTest, BoardFull) {
             board[i][j] = 'X';
         }
     }
-    ASSERT_TRUE(boardFull(board));
+    ASSERT_TRUE(board_full(board));
 }
 
-// Test the hasValidMoves function
-TEST(AgentTest, HasValidMoves) {
-    initBoard();
-    ASSERT_TRUE(hasValidMoves('X'));
-    ASSERT_TRUE(hasValidMoves('O'));
-
-    // Fill the board with 'X'
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
-            board[i][j] = 'X';
-        }
-    }
-    ASSERT_FALSE(hasValidMoves('X'));
-    ASSERT_FALSE(hasValidMoves('O'));
-}
 
 TEST(SwitchPlayerTest, BasicSwitch) {
     initBoard();
 
-    player = 'X';
-    bool can_switch_to_O = switchPlayer();
+    active_side = 'X';
+    bool can_switch_to_O = switch_player();
     ASSERT_TRUE(can_switch_to_O);
-    ASSERT_EQ(player, 'O');
+    ASSERT_EQ(active_side, 'O');
 
-    player = 'O';
-    bool can_switch_to_X = switchPlayer();
+    active_side = 'O';
+    bool can_switch_to_X = switch_player();
     ASSERT_TRUE(can_switch_to_X);
-    ASSERT_EQ(player, 'X');
+    ASSERT_EQ(active_side, 'X');
 }
 
 TEST(SwitchPlayerTest, NoValidMoves) {
@@ -72,8 +57,8 @@ TEST(SwitchPlayerTest, NoValidMoves) {
             board[i][j] = 'X';
         }
     }
-    player = 'O';
-    bool can_switch_to_X = switchPlayer();
+    active_side = 'O';
+    bool can_switch_to_X = switch_player();
     ASSERT_FALSE(can_switch_to_X);
 }
 

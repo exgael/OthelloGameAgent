@@ -1,83 +1,90 @@
 #include "agent.h"
 
-int main(int argc, char *argv[]) {
-
+Player parse_args(int argc, char *argv[]) {
     if( argc != 2 ) {
         std::cerr << "Utilisation :" << std::endl;
         std::cerr << argv[0] << " [X|O]" << std::endl;
-        return 0;
+        exit(0);
     }
 
     if((argv[1][0] != 'X') && (argv[1][0] != 'O')) {
         std::cerr << "Utilisation :" << std::endl;
         std::cerr << argv[0] << " [X|O]" << std::endl;
-        return 0;
+         exit(0);
     }
 
-    moi = argv[1][0];
+    return argv[1][0];
+}
 
-    if ( verbose ) {
-        std::cerr <<  "Je suis: "<<  moi << std::endl;
-    }
-    
-    lui = moi == 'X' ? 'O' : 'X';
 
-    srand(time(NULL));
+void broadcast_move(const Move& move) {
+    int row, col;
+    std::tie(row, col) = move;
+    std::cout << row << col << '\n' << std::flush;
+}
 
-    initBoard();
 
-    verbose = 0;
+Move listen_for_broadcast()
+{
+    std::string coups;
+    std::cin >> coups;
+    std::cerr << "coups: \"" << coups << "\"" << std::endl;
+    int row =  coups[0]-'0';
+    int col =  coups[1]-'0';
+    return {row, col};
+}
+
+
+void play_move_locally(const Move& move) 
+{
+    if (is_valid_move(move, active_side)) play_move(move, active_side);
+    else exit(1);
+}
+
+
+int main(int argc, char *argv[]) {
+
+    msglog(1, "Agent start...");
+    char moi = parse_args(argc, argv);
+
+    msglog(1, "Ana : %c", moi);
+    init_agent( 
+        moi,
+        1
+    );
+
+    msglog(1, "Agent initialized.");
+
+    int turn_count = 0;
     while (true) {
-        int row;
-        int col;
 
-        if (moi == player) {
-            auto actionsPossible = listDesCoupsPossible();
+        Move move;
 
-            int bestValue = -100000;
-            std::tuple<int, int> bestMove;
 
-            for (const auto& action : actionsPossible) {
-                int row, col;
-                std::tie(row, col) = action;
+        if (home_side == active_side) {
+            msglog(1, "Agent's turn: %d", turn_count);
+            move = search_next_move();
 
-                std::vector<std::vector<char>> prevBoard = playMove(row, col, moi);
+            msglog(1, "Broadcasting move...");
+            broadcast_move(move);
+            turn_count += 1;
 
-                char current_player = moi;
-                switchPlayer();
-                assert( player==lui);
-
-                int value = alphabeta(4, -100000, 100000, lui); // Set the depth to 4 or any desired value
-                restoreBoard(row, col, prevBoard);
-                player = moi;
-
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestMove = action;
-                }
-            }
-            std::tie(row, col) = bestMove;
-            std::cout << row << col << '\n' << std::flush;
-
-            
-
-        } else {
-            std::string coups;
-            std::cin >> coups;
-            std::cerr << "coups: \"" << coups << "\"" << std::endl;
-            row =  coups[0]-'0';
-            col =  coups[1]-'0';
+            msglog(1, "Agent play (%d, %d) on local board",
+            std::get<0>(move),
+            std::get<1>(move)
+        );
+        } else {    
+            msglog(1, "Agent waiting for opponent...");
+            move = listen_for_broadcast();
+            msglog(1, "Agent replicate (%d, %d) on local board",
+                std::get<0>(move),
+                std::get<1>(move)
+            );
         }
 
-        if (isValidMove(row, col, player)) {
-            playMove(row, col, player);
-            if(!switchPlayer()) {
-                break;
-            }
-        } else {
-            std::cerr << "ERREUR: coups " << row << " " << col << " est invalide !" << std::endl;
-            return 0;
-        }
+        play_move_locally(move);
+        
+        if (!switch_player()) msglog(0, "Neither team can play!"); break;
     }
 
     return 0;
