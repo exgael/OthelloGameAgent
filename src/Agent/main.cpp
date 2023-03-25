@@ -27,18 +27,20 @@ void broadcast_move(const Move& move) {
 Move listen_for_broadcast()
 {
     std::string coups;
+    msglog(2, "Enter move (row, col): ");
     std::cin >> coups;
-    std::cerr << "coups: \"" << coups << "\"" << std::endl;
-    int row =  coups[0]-'0';
-    int col =  coups[1]-'0';
-    return {row, col};
+    return {coups.at(0) - '0', coups.at(1) - '0'};
 }
 
 
 void play_move_locally(const Move& move) 
 {
     if (is_valid_move(move, active_side)) play_move(move, active_side);
-    else {msglog(1, "Failure!"); exit(1);}
+    else {
+        msglog(1, "Failure!");
+        msglog(1, "Current player : %c", active_side);
+        exit(0);
+        }
 }
 
 
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     init_agent( 
         moi,
-        -1
+        0
     );
 
     msglog(1, "Agent initialized.");
@@ -73,7 +75,7 @@ int main(int argc, char *argv[]) {
             msglog(1, "Agent play (%d, %d) on local board",
             std::get<0>(move),
             std::get<1>(move)
-        );
+            );
         } else {    
             msglog(1, "Agent waiting for opponent...");
             move = listen_for_broadcast();
@@ -85,8 +87,10 @@ int main(int argc, char *argv[]) {
         }
 
         play_move_locally(move);
-        
-        if (!switch_player()) {msglog(0, "Neither team can play!"); break;}
+
+        if(!switch_player()) {
+            break;
+        }
     }
 
     return 0;

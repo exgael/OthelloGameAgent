@@ -77,13 +77,93 @@ TEST(IS_VALID_MOVE, EmptyBoard_NoValidMoves) {
     }
 }
 
-TEST(IS_VALID_MOVE, FullBoard_NoValidMoves) {}
-TEST(IS_VALID_MOVE, NoValidMovesForCurrentPlayer) {}
-TEST(IS_VALID_MOVE, MultipleRowsColumnsFlipped) {}
-TEST(IS_VALID_MOVE, MoveOutOfBounds) {}
-TEST(IS_VALID_MOVE, MoveOnOccupiedSpot) {}
-TEST(IS_VALID_MOVE, MoveDoesNotFlipAnyPieces) {}
-TEST(IS_VALID_MOVE, MoveFlipsMultiplePiecesInOneDirection) {}
+TEST(IS_VALID_MOVE, FullBoard_NoValidMoves) {
+    initBoard();
+
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            board[i][j] = 'X';
+        }
+    }
+
+    for(int i = 0; i < 8; i++ ) {
+        for(int j = 0; j < 8; j++ ) {
+            Move move = {i, j};
+            Player player = 'O';
+            EXPECT_FALSE(is_valid_move(move, player));
+            player = 'X';
+            EXPECT_FALSE(is_valid_move(move, player));
+        }
+    }
+}
+
+TEST(IS_VALID_MOVE, MoveOutOfBounds) {
+    initBoard();
+
+    Move move = {-1, -1};
+    Player player = 'O';
+    EXPECT_FALSE(is_valid_move(move, player));
+}
+
+
+TEST(IS_VALID_MOVE, MoveDoesNotFlipAnyPieces) {
+    initBoard();
+
+    Move move = {2, 3};
+    Player player = 'X';
+    EXPECT_FALSE(is_valid_move({2, 3}, player));
+    EXPECT_FALSE(is_valid_move({3, 2}, player));
+    player = 'O';
+    EXPECT_FALSE(is_valid_move({2, 4}, player));
+    EXPECT_FALSE(is_valid_move({4, 2}, player));
+    EXPECT_FALSE(is_valid_move({5, 5}, player));
+    EXPECT_FALSE(is_valid_move({6, 4}, player));
+}
+
+TEST(PLAY_MOVE, GameTest1) {
+    initBoard();
+
+    Move move;
+    Player player;
+
+    // turn 1
+    player = 'X';
+    move = {5, 3};
+    EXPECT_TRUE(is_valid_move(move, player));
+    play_move(move, player);
+    assert(board[3][3] == 'X');
+    assert(board[4][3] == 'X');
+    assert(board[5][3] == 'X');
+
+    player = 'O';
+    move = {5, 2};
+    EXPECT_TRUE(is_valid_move(move, player));
+    play_move(move, player);
+    assert(board[5][2] == 'O');
+    assert(board[4][3] == 'O');
+    assert(board[3][4] == 'O');
+
+    // turn 2
+    player = 'X';
+    auto moves = move_candidates(player);
+    EXPECT_TRUE(moves.size() == 4);
+
+    move = {5, 1};
+    EXPECT_TRUE(is_valid_move(move, player));
+    play_move(move, player);
+    assert(board[5][1] == 'X');
+    assert(board[5][2] == 'X');
+    assert(board[5][3] == 'X');
+
+    player = 'O';
+    move = {4, 5};
+    EXPECT_TRUE(is_valid_move(move, player));
+    play_move(move, player);
+    assert(board[4][5] == 'O');
+    assert(board[4][4] == 'O');
+    assert(board[4][3] == 'O');
+
+}
 
 // Define your main function to run all tests
 int main(int argc, char** argv) {

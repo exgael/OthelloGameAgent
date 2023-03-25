@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Remove the existing build directory if it exists
-if [ -d "build" ]; then
-  rm -rf build
-fi
+# if [ -d "build" ]; then
+#  rm -rf build
+#fi
 
 # Run cmake to generate build files
 cmake -S . -B build

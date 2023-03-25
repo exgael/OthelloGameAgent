@@ -57,7 +57,7 @@ bool is_valid_move(const Move& move, const Player player);
 Board play_move( const Move &move, const Player player );
 bool switch_player();
 int scoreX();
-Moves move_candidates();
+Moves move_candidates(Player player);
 void restore_board(const Board& prevBoard );
 bool board_full( Board board );
 int alphabeta( int depth, int alpha, int beta, Player current_player );

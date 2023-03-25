@@ -18,7 +18,7 @@ const std::array<Moves, 9> DIRECTIONS = {{
     {RIGHT, DOWN, DR},                           // top-left corner
     {LEFT, DOWN, DL},                            // top-right corner
     {RIGHT, LEFT, DOWN, DR, DL},               // top edge
-    {RIGHT, DOWN, UP, DR, UP},                 // left edge
+    {RIGHT, DOWN, UP, DR, UR},                 // left edge
     {LEFT, DOWN, UP, UL, DL},                  // right edge
     {UP, RIGHT, LEFT, UL, UR},                 // bottom edge
     {UP, RIGHT, UR},                             // bottom-left corner
@@ -133,7 +133,6 @@ Board play_move(const Move &move, const Player player) {
         const auto &dir = directions[l];
         int i = std::get<0>(dir);
         int j = std::get<1>(dir); 
-        msglog(1, "play_move direction :(%d, %d)", i, j);
         int k = 1;
         while (true) {
             int newX = x + i * k;
@@ -199,12 +198,12 @@ int scoreX() {
     return X-O;
 }
 
-Moves move_candidates() {
+Moves move_candidates(Player player) {
     Moves moves;
 
     for (int i = 0; i < DIM; i++) {
         for (int j = 0; j < DIM; j++) {
-            if ( board[i][j] == '-' &&  is_valid_move({i, j}, active_side))
+            if (is_valid_move({i, j}, player))
             {
                 moves.push_back({i,j});
             }
@@ -236,8 +235,8 @@ Move search_next_move()
 {
     int best_score = -999;
     Move best_move = {-1, -1};
-    Moves moves = move_candidates();
-    msglog(0, "DEBUG: %d", moves.size());
+    Moves moves = move_candidates(home_side);
+    msglog(2, "Num candidates: %d", moves.size());
 
 /*     for (const Move move : moves)
     {
@@ -259,7 +258,7 @@ Move search_next_move()
         }
     } */
 
-    return moves.at(rand()%moves.size());
+    return moves.at(rand() % moves.size());
 }
 
 int alphabeta(int depth, int alpha, int beta, Player curr_player) {
