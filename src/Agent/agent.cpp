@@ -3,14 +3,14 @@
 
 /*  CONSTANTES  */
 
-constexpr Move RIGHT = {0, 1};
-constexpr Move LEFT = {0, -1};
-constexpr Move DOWN = {1, 0};
-constexpr Move UP = {-1, 0};
-constexpr Move UL = {-1, -1};
-constexpr Move UR = {-1, 1};
-constexpr Move DL = {1, -1};
-constexpr Move DR = {1, 1};
+constexpr Move RIGHT =  { 0,  1};
+constexpr Move LEFT  =  { 0, -1};
+constexpr Move DOWN  =  { 1,  0};
+constexpr Move UP    =  {-1,  0};
+constexpr Move UL    =  {-1, -1};
+constexpr Move UR    =  {-1,  1};
+constexpr Move DL    =  { 1, -1};
+constexpr Move DR    =  { 1,  1};
 
 
 // Valid direction to find neighbors
@@ -82,8 +82,6 @@ void initBoard() {
 }
 
 
-
-
 bool is_valid_move(const Move &move, const Player player) 
 {
     const Coordinate x = std::get<0>(move);
@@ -105,8 +103,12 @@ bool is_valid_move(const Move &move, const Player player)
         while (true) {
             const Coordinate new_x = x + i * k;
             const Coordinate new_y = y + j * k;
-            if (new_x < 0 || new_x >= DIM || new_y < 0 || new_y >= DIM) break;
-            if (board[new_x][new_y] == '-') break;
+            if (new_x < 0 
+                || new_x >= DIM 
+                || new_y < 0 
+                || new_y >= DIM 
+                || board[new_x][new_y] == '-') break;
+                
             if (board[new_x][new_y] == player) {
                 if (k > 1) { return true; }
                 break;
@@ -184,7 +186,7 @@ bool switch_player() {
     return false;
 }
 
-int scoreX() {
+int score_player(const Player player) {
     int X = 0;
     int O = 0;
 
@@ -195,7 +197,8 @@ int scoreX() {
         }
     }
 
-    return X-O;
+    if (player == 'X') return X-O;
+    else return O-X;
 }
 
 Moves move_candidates(Player player) {
@@ -238,15 +241,19 @@ Move search_next_move()
     Moves moves = move_candidates(home_side);
     msglog(2, "Num candidates: %d", moves.size());
 
-/*     for (const Move move : moves)
+    for (const Move move : moves)
     {
         assert(active_side == home_side);
         Board orginal_board = play_move(move, home_side);
 
         switch_player();
-        assert(active_side == opposing_side);
-
-        int score = alphabeta(4, -100000, 100000, opposing_side);
+        
+        int score;
+        if (home_side == active_side) {
+            score = alphabeta(6, -999, 999, home_side);
+        } else {
+            score = alphabeta(6, -999, 999, opposing_side);
+        }
 
         restore_board(orginal_board);
         active_side = home_side;
@@ -256,12 +263,12 @@ Move search_next_move()
             best_score = score;
             best_move = move;
         }
-    } */
+    }
 
-    return moves.at(rand() % moves.size());
+    return best_move;
 }
 
-int alphabeta(int depth, int alpha, int beta, Player curr_player) {
+int alphabeta(int depth, int alpha, int beta, Player player) {
     if (depth == 0 || board_full(board)) {
         if ( verbosity ) {
             if (depth == 0 && board_full(board)) {
@@ -274,58 +281,42 @@ int alphabeta(int depth, int alpha, int beta, Player curr_player) {
             }
 
         }
-        return scoreX(); // Evaluate the board state when reaching the specified depth or no moves left
+        return score_player(player); // Evaluate the board state when reaching the specified depth or no moves left
     }
 
-    if (curr_player == home_side) {
-        int maxEval = -100000; // Set to a very small value
+    if (player == home_side) {
+        int maxEval = -999; // Set to a very small value
 
         for (int i = 0; i < board.size(); i++) {
             for (int j = 0; j < board[i].size(); j++) {
                 if (is_valid_move({i, j}, home_side)) {
+
                     msglog(3, "Alpha beta maximizing part.");
                     msglog(3, "%c move : %d %d", active_side, i, j);
 
+                    Board prev_board = play_move({i, j}, home_side);
 
-                    Board prevBoard = play_move({i, j}, home_side);
+                    msglog(3, "Alpha beta prepare minimizing. Player switch.");
 
-                    char who_played = home_side;
-                    
-
-                     msglog(3, "Alpha beta prepare minimizing. Player switch.");
-
-
-                    bool can_switch = switch_player();
-
-                    if (! can_switch) {
-                        return scoreX();
+                    if (! switch_player()) {
+                        return score_player(home_side);
                     }
 
- 
                     msglog(3, "After switchPlayer(): active side is: %c", active_side);
 
-                    // If the other player cannot play, keep the current player
-                    if (who_played == active_side) {
-                        return scoreX();
+                    int eval;
+                    // If home_side cannot play, keep opposing_side
+                    if (home_side == active_side) {
+                        eval = alphabeta(depth - 1, alpha, beta, home_side);
+                    } else {
+                        eval = alphabeta(depth - 1, alpha, beta, opposing_side);
                     }
-                   
-                    if (active_side != opposing_side ) {
-                        msglog(3, "activate side i0s %c, should be %c", active_side, opposing_side);
-
-                        assert( active_side == opposing_side );
-                    }
-                    
-
-                    int eval = alphabeta(depth - 1, alpha, beta, opposing_side);
-
 
                     msglog(3, "Move : %d %d, Eval : %d", i, j, eval);
 
-                  
-                    restore_board(prevBoard);
+                    restore_board(prev_board);
 
-                    active_side = who_played;
-
+                    active_side = home_side;
 
                     maxEval = std::max(maxEval, eval);
                     alpha = std::max(alpha, eval);
@@ -337,7 +328,7 @@ int alphabeta(int depth, int alpha, int beta, Player curr_player) {
         }
         return maxEval;
     } else {
-        int minEval = 100000; // Set to a very large value
+        int minEval = 999; // Set to a very large value
 
         for (int i = 0; i < board.size(); i++) {
             for (int j = 0; j < board[i].size(); j++) {
@@ -345,45 +336,29 @@ int alphabeta(int depth, int alpha, int beta, Player curr_player) {
                     msglog(3, "Alpha beta maximizing part.");
                     msglog(3, "%c move : %d %d", active_side, i, j);
 
+                    Board prev_board = play_move({i, j}, opposing_side);
 
-                    Board prevBoard = play_move({i, j}, opposing_side);
+                    msglog(3, "Alpha beta prepare minimizing. Player switch.");
 
-                    char who_played = opposing_side;
-                    
-
-                     msglog(3, "Alpha beta prepare minimizing. Player switch.");
-
-
-                    bool can_switch = switch_player();
-
-                    if (! can_switch) {
-                        return scoreX();
+                    if (! switch_player()) {
+                        return score_player(opposing_side);
                     }
 
- 
                     msglog(3, "After switchPlayer(): active side is: %c", active_side);
 
-                    // If the other player cannot play, keep the current player
-                    if (who_played == active_side) {
-                        return scoreX();
+                    int eval;
+                    // If home_side cannot play, keep opposing_side
+                    if (opposing_side == active_side) {
+                        eval = alphabeta(depth - 1, alpha, beta, opposing_side);
+                    } else {
+                        eval = alphabeta(depth - 1, alpha, beta, home_side);
                     }
-                   
-                    if (active_side != home_side ) {
-                        msglog(3, "activate side i0s %c, should be %c", active_side, home_side);
-
-                        assert( active_side == home_side );
-                    }
-                    
-
-                    int eval = alphabeta(depth - 1, alpha, beta, home_side);
-
 
                     msglog(3, "Move : %d %d, Eval : %d", i, j, eval);
 
-                  
-                    restore_board(prevBoard);
+                    restore_board(prev_board);
 
-                    active_side = who_played;
+                    active_side = opposing_side;
 
 
                     minEval = std::min(minEval, eval);

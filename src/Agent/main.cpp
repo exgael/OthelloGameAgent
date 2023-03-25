@@ -93,5 +93,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    msglog(0, "Home %d", score_player(home_side));
+    msglog(0, "Opposing %d", score_player(opposing_side));
+
     return 0;
 }
