@@ -3,7 +3,43 @@
 
 /*  CONSTANTES  */
 
-constexpr std::size_t DIM = 8;
+constexpr Move RIGHT = {0, 1};
+constexpr Move LEFT = {0, -1};
+constexpr Move DOWN = {1, 0};
+constexpr Move UP = {-1, 0};
+constexpr Move UL = {-1, -1};
+constexpr Move UR = {-1, 1};
+constexpr Move DL = {1, -1};
+constexpr Move DR = {1, 1};
+
+
+// Valid direction to find neighbors
+const std::array<Moves, 9> DIRECTIONS = {{
+    {RIGHT, DOWN, DR},                           // top-left corner
+    {LEFT, DOWN, DL},                            // top-right corner
+    {RIGHT, LEFT, DOWN, DR, DL},               // top edge
+    {RIGHT, DOWN, UP, DR, UP},                 // left edge
+    {LEFT, DOWN, UP, UL, DL},                  // right edge
+    {UP, RIGHT, LEFT, UL, UR},                 // bottom edge
+    {UP, RIGHT, UR},                             // bottom-left corner
+    {UP, LEFT, UL},                              // bottom-right corner
+    {UP, DOWN, RIGHT, LEFT, UL, UR, DL, DR} // center
+}};
+
+// Lookup table to link board cell to valid neighbors 
+constexpr std::array<size_t, 64> DIRECTIONS_TABLE = {
+    0, 2, 2, 2, 2, 2, 2, 1,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    6, 5, 5, 5, 5, 5, 5, 7
+};
+
+// The number of element at each index of DIRECTIONS
+constexpr std::array<size_t, 9> DIRECTIONS_COUNT = {3, 3, 5, 5, 5, 5, 3, 3, 8};
 
 /*  VARIABLES  */
 Board board;
@@ -26,8 +62,6 @@ void msglog(const int log_level, const char* format, ...) {
     std::cerr << buf << std::endl;
 }
 
-
-
 void init_agent(Player home_side_symbol, int verbose) 
 {
     home_side = home_side_symbol;
@@ -38,7 +72,9 @@ void init_agent(Player home_side_symbol, int verbose)
 }
 
 void initBoard() {   
-    board.resize(8, std::vector<char>(8, '-'));
+    for (auto &row : board) {
+        row.fill('-');
+    }
     board[3][3] = 'X';
     board[3][4] = 'O';
     board[4][3] = 'O';
@@ -46,28 +82,6 @@ void initBoard() {
 }
 
 
-const std::array<Moves, 9> DIRECTIONS = {{
-    {{0, 1}, {1, 0}, {1, 1}},                     // top-left corner
-    {{0, -1}, {1, -1}, {1, 0}},                    // top-right corner
-    {{0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}},    // top edge
-    {{-1, 0}, {-1, 1}, {0, 1}},                    // left edge
-    {{-1, -1}, {-1, 0}, {0, -1}},                  // right edge
-    {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}}, // bottom edge
-    {{-1, 0}, {-1, 1}, {0, 1}, {1, 0}, {1, 1}},    // bottom-left corner
-    {{-1, -1}, {-1, 0}, {0, -1}, {1, -1}, {1, 0}}, // bottom-right corner
-    {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}} // center
-}};
-
-const std::array<std::array<int, 8>, 8> DIRECTIONS_TABLE = {{
-    {{0, 2, 2, 2, 2, 2, 2, 1}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{3, 8, 8, 8, 8, 8, 8, 4}},
-    {{6, 5, 5, 5, 5, 5, 5, 7}}
-}};
 
 
 bool is_valid_move(const Move &move, const Player player) 
@@ -79,10 +93,12 @@ bool is_valid_move(const Move &move, const Player player)
         return false;
     }
     
-    const int index = DIRECTIONS_TABLE[x][y];
+    const int index = DIRECTIONS_TABLE[x * 8 + y];
     const auto &directions = DIRECTIONS[index];
+    size_t num_directions = DIRECTIONS_COUNT[index];
     
-    for (const auto &dir : directions) {
+    for (size_t l = 0; l < num_directions; ++l) {
+        const auto &dir = directions[l];
         int i = std::get<0>(dir);
         int j = std::get<1>(dir);
         int k = 1;
@@ -103,17 +119,21 @@ bool is_valid_move(const Move &move, const Player player)
 
 
 Board play_move(const Move &move, const Player player) {
+    assert (is_valid_move(move, player));
     Board prevBoard = board;
     int x = std::get<0>(move);
     int y = std::get<1>(move);
     board[x][y] = player;
 
-    const int index = DIRECTIONS_TABLE[x][y];
+    const int index = DIRECTIONS_TABLE[x * 8 + y];
     const auto &directions = DIRECTIONS[index];
+    size_t num_directions = DIRECTIONS_COUNT[index];
     
-    for (const auto &dir : directions) {
+    for (size_t l = 0; l < num_directions; ++l) {
+        const auto &dir = directions[l];
         int i = std::get<0>(dir);
         int j = std::get<1>(dir); 
+        msglog(1, "play_move direction :(%d, %d)", i, j);
         int k = 1;
         while (true) {
             int newX = x + i * k;
@@ -268,7 +288,7 @@ int alphabeta(int depth, int alpha, int beta, Player curr_player) {
                     msglog(3, "%c move : %d %d", active_side, i, j);
 
 
-                    std::vector<std::vector<char>> prevBoard = play_move({i, j}, home_side);
+                    Board prevBoard = play_move({i, j}, home_side);
 
                     char who_played = home_side;
                     
@@ -327,7 +347,7 @@ int alphabeta(int depth, int alpha, int beta, Player curr_player) {
                     msglog(3, "%c move : %d %d", active_side, i, j);
 
 
-                    std::vector<std::vector<char>> prevBoard = play_move({i, j}, opposing_side);
+                    Board prevBoard = play_move({i, j}, opposing_side);
 
                     char who_played = opposing_side;
                     

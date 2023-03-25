@@ -62,6 +62,29 @@ TEST(SwitchPlayerTest, NoValidMoves) {
     ASSERT_FALSE(can_switch_to_X);
 }
 
+TEST(IS_VALID_MOVE, EmptyBoard_NoValidMoves) {
+    initBoard();
+    board[3][3] = '-';
+    board[3][4] = '-';
+    board[4][3] = '-';
+    board[4][4] = '-';
+    Player player = 'O';
+    for(int i = 0; i < 8; i++ ) {
+        for(int j = 0; j < 8; j++ ) {
+            Move move = {i, j};
+            EXPECT_FALSE(is_valid_move(move, player));
+        }
+    }
+}
+
+TEST(IS_VALID_MOVE, FullBoard_NoValidMoves) {}
+TEST(IS_VALID_MOVE, NoValidMovesForCurrentPlayer) {}
+TEST(IS_VALID_MOVE, MultipleRowsColumnsFlipped) {}
+TEST(IS_VALID_MOVE, MoveOutOfBounds) {}
+TEST(IS_VALID_MOVE, MoveOnOccupiedSpot) {}
+TEST(IS_VALID_MOVE, MoveDoesNotFlipAnyPieces) {}
+TEST(IS_VALID_MOVE, MoveFlipsMultiplePiecesInOneDirection) {}
+
 // Define your main function to run all tests
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);

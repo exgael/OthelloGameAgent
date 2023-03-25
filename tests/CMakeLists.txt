@@ -20,7 +20,7 @@ add_test(NAME test_game_1
 )
 
 add_test(NAME test_game_2
-  COMMAND test_othello_game.sh 3
+  COMMAND test_othello_game.sh 2
 )
 
 add_test(NAME test_game_3

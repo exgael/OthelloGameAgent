@@ -38,7 +38,7 @@ Move listen_for_broadcast()
 void play_move_locally(const Move& move) 
 {
     if (is_valid_move(move, active_side)) play_move(move, active_side);
-    else exit(1);
+    else {msglog(1, "Failure!"); exit(1);}
 }
 
 
@@ -48,9 +48,10 @@ int main(int argc, char *argv[]) {
     char moi = parse_args(argc, argv);
 
     msglog(1, "Ana : %c", moi);
+
     init_agent( 
         moi,
-        1
+        -1
     );
 
     msglog(1, "Agent initialized.");
@@ -76,6 +77,7 @@ int main(int argc, char *argv[]) {
         } else {    
             msglog(1, "Agent waiting for opponent...");
             move = listen_for_broadcast();
+
             msglog(1, "Agent replicate (%d, %d) on local board",
                 std::get<0>(move),
                 std::get<1>(move)
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
 
         play_move_locally(move);
         
-        if (!switch_player()) msglog(0, "Neither team can play!"); break;
+        if (!switch_player()) {msglog(0, "Neither team can play!"); break;}
     }
 
     return 0;

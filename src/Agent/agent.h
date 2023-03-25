@@ -11,7 +11,7 @@
 #include <set>
 #include <array>
 
-using Board = std::vector<std::vector<char>>;  // 2D vector of char to represent the game 
+using Board = std::array<std::array<char, 8>, 8>; // 2D vector of char to represent the game 
 using Player = char;  // Type used to represent the players
 using Coordinate = std::size_t; // Type used to represent the coordinates on the board
 using Move = std::tuple<Coordinate, Coordinate>; // Tuple type to represent a move on the board
@@ -23,6 +23,8 @@ extern Player home_side;
 extern Player opposing_side;
 extern int verbosity;
 extern int no_valid_move;
+
+constexpr std::size_t DIM = 8;
 
 
 /**
