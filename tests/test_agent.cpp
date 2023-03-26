@@ -163,7 +163,29 @@ TEST(PLAY_MOVE, GameTest1) {
     assert(board[4][5] == 'O');
     assert(board[4][4] == 'O');
     assert(board[4][3] == 'O');
+}
+TEST(PLAY_MOVE, GameTest2) {
+   
 
+    std::array<std::array<char, 8>, 8> board_test;
+    
+     board_test[0]= {'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'};
+     board_test[1]= {'X', 'X', 'O', 'O', 'O', 'O', 'O', 'X'};
+     board_test[2]= {'X', 'X', 'X', 'O', 'X', 'X', 'O', 'X'};
+     board_test[3]= {'X', 'X', 'X', 'X', 'X', 'X', 'O', 'X'};
+     board_test[4]= {'X', 'X', 'O', 'X', 'O', 'O', 'O', 'X'};
+     board_test[5]= {'X', 'O', 'X', 'O', '-', '-', 'O', 'X'};
+     board_test[6]= {'X', 'X', 'X', 'O', 'O', 'O', 'O', 'X'};
+     board_test[7]= {'X', 'X', 'X', 'X', 'X', '-', '-', 'X'};
+
+    Move move;
+    Player player;
+
+    // turn 1
+    player = 'X';
+    move = {7, 5};
+    EXPECT_TRUE(is_valid_move(board_test, move, player));
+    board = play_move(board_test, move, player);
 }
 
 // Define your main function to run all tests

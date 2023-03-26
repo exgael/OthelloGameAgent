@@ -200,6 +200,10 @@ int main(int argc, char *argv[]) {
         if(moi == player) {
             auto actionsPossible = listDesCoupsPossible();
 
+            if (actionsPossible.size() ==0 ) {
+                std::cerr << "OPPONENT SKIP TURN!" << std::endl;
+            }
+
             // TODO : CHOISIR LE COUPS A JOUER ////////////
             std::tie(row, col) = actionsPossible[ rand()%actionsPossible.size() ];  // Choix aléatoire
             std::cout << row << col << '\n' << std::flush;

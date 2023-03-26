@@ -2,11 +2,54 @@
 #include <stack>
 #include <set>
 #include <algorithm>
+#include <unordered_map>
+
+
+/*  LOG UTILITY  */
+
+void msglog(const int log_level, const char* format, ...) {
+    if (log_level > verbosity) {
+        return;
+    }
+
+    char buf[512];
+    va_list args;
+    va_start(args, format);
+    std::vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    std::cerr << buf << std::endl;
+}
+
+
+/*  STRUCT TO STORE MOVE SCORE  */
+
+struct MoveHasher {
+    std::size_t operator()(const Move &move) const {
+        return std::hash<int>{}(std::get<0>(move)) ^ std::hash<int>{}(std::get<1>(move));
+    }
+};
+
 
 /*  CONSTANTES  */
 
+
+// Board dimentions
 constexpr std::size_t DIM = 8;
 
+// Used to determine move score in heuristic function
+constexpr int position_values[8][8] = {
+    {100, -20,  10,   5,   5,  10, -20, 100},
+    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
+    { 10,  -2,   1,   1,   1,   1,  -2,  10},
+    {  5,  -2,   1,   0,   0,   1,  -2,   5},
+    {  5,  -2,   1,   0,   0,   1,  -2,   5},
+    { 10,  -2,   1,   1,   1,   1,  -2,  10},
+    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
+    {100, -20,  10,   5,   5,  10, -20, 100}
+};
+
+// cell shift
 constexpr Move RIGHT =  { 0,  1};
 constexpr Move LEFT  =  { 0, -1};
 constexpr Move DOWN  =  { 1,  0};
@@ -16,17 +59,17 @@ constexpr Move UR    =  {-1,  1};
 constexpr Move DL    =  { 1, -1};
 constexpr Move DR    =  { 1,  1};
 
-// Valid direction to find neighbors
+// Valid direction to find neighbors based on cell position on board
 constexpr std::array<std::array<Move, 8>, 9> DIRECTIONS = {{
-    {RIGHT, DOWN, DR},                           // top-left corner
-    {LEFT, DOWN, DL},                            // top-right corner
-    {RIGHT, LEFT, DOWN, DR, DL},               // top edge
-    {RIGHT, DOWN, UP, DR, UR},                 // left edge
-    {LEFT, DOWN, UP, UL, DL},                  // right edge
-    {UP, RIGHT, LEFT, UL, UR},                 // bottom edge
-    {UP, RIGHT, UR},                             // bottom-left corner
-    {UP, LEFT, UL},                              // bottom-right corner
-    {UP, DOWN, RIGHT, LEFT, UL, UR, DL, DR} // center
+    {RIGHT, DOWN, DR},                          // top-left corner
+    {LEFT, DOWN, DL},                           // top-right corner
+    {RIGHT, LEFT, DOWN, DR, DL},                // top edge
+    {RIGHT, DOWN, UP, DR, UR},                  // left edge
+    {LEFT, DOWN, UP, UL, DL},                   // right edge
+    {UP, RIGHT, LEFT, UL, UR},                  // bottom edge
+    {UP, RIGHT, UR},                            // bottom-left corner
+    {UP, LEFT, UL},                             // bottom-right corner
+    {UP, DOWN, RIGHT, LEFT, UL, UR, DL, DR}     // center
 }};
 
 // Lookup table to link board cell to valid neighbors 
@@ -44,27 +87,17 @@ constexpr std::array<size_t, 64> DIRECTIONS_TABLE = {
 // The number of element at each index of DIRECTIONS
 constexpr std::array<size_t, 9> DIRECTIONS_COUNT = {3, 3, 5, 5, 5, 5, 3, 3, 8};
 
+
 /*  VARIABLES  */
+
 Board board;
 Player active_side = 'X';
 Player home_side;
 Player opposing_side;
 int verbosity;
 
-void msglog(const int log_level, const char* format, ...) {
-    if (log_level > verbosity) {
-        return;
-    }
 
-    char buf[512];
-    va_list args;
-    va_start(args, format);
-    std::vsnprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-
-    std::cerr << buf << std::endl;
-}
-
+/*  FUNCTION IMPLEMENTATION  */
 
 Player opponent(Player player) {
     return player == 'X' ? 'O' : 'X';
@@ -175,7 +208,7 @@ bool switch_player(const Board &b) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, newPlayer)) {
                 active_side = newPlayer;  
-                msglog(2, "Switch occured"); 
+                msglog(3, "Switch occured"); 
                 return true;
             }
         }
@@ -183,54 +216,64 @@ bool switch_player(const Board &b) {
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, active_side)) {
-                msglog(2, "Active player remain");
+                msglog(3, "Active player remain");
                 return true;
             }
         }
     }
 
-    msglog(2, "No valid moves for either player");
+    msglog(3, "No valid moves for either player");
     return false;
 }
 
-constexpr int position_values[8][8] = {
-    {100, -20,  10,   5,   5,  10, -20, 100},
-    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
-    { 10,  -2,   1,   1,   1,   1,  -2,  10},
-    {  5,  -2,   1,   0,   0,   1,  -2,   5},
-    {  5,  -2,   1,   0,   0,   1,  -2,   5},
-    { 10,  -2,   1,   1,   1,   1,  -2,  10},
-    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
-    {100, -20,  10,   5,   5,  10, -20, 100}
-};
-
-int position_score(const Board &b, const Player player) {
-    int score = 0;
-    for (int i = 0; i < DIM; i++) {
-        for (int j = 0; j < DIM; j++) {
-            if (b[i][j] == player) {
-                score += position_values[i][j];
-            } else if (b[i][j] == opponent(player)) {
-                score -= position_values[i][j];
+bool can_switch_player(const Board &b) {
+    char newPlayer = (active_side == 'X') ? 'O' : 'X';
+    for (int i = 0; i < board.size(); i++) {
+        for (int j = 0; j < board[i].size(); j++) {
+            if (is_valid_move(b, {i, j}, newPlayer)) {
+                msglog(3, "Switch occured"); 
+                return true;
             }
         }
     }
-    return score;
-}
-
-int mobility_score(const Board &b, const Player player) {
-    int player_mobility = move_candidates(b, player).size();
-    int opponent_mobility = move_candidates(b, opponent(player)).size();
-
-    // Avoid division by zero and return a proper value if both players have 0 mobility.
-    if (player_mobility + opponent_mobility == 0) {
-        return 0;
+    for (int i = 0; i < board.size(); i++) {
+        for (int j = 0; j < board[i].size(); j++) {
+            if (is_valid_move(b, {i, j}, active_side)) {
+                msglog(3, "Active player remain");
+                return true;
+            }
+        }
     }
 
-    int mobility_diff = player_mobility - opponent_mobility;
-    float mobility_score = static_cast<float>(mobility_diff) / static_cast<float>(player_mobility + opponent_mobility);
+    msglog(3, "No valid moves for either player");
+    return false;
+}
 
-    return static_cast<int>(100 * mobility_score);
+
+bool board_full(const Board &b) {
+    for(auto &line: b) {
+        for(auto c: line) {
+            if(c == '-') {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+Move search_next_move(int depth)
+{
+    // Call alphabeta and get the best move
+    std::pair<int, Move> result = alphabeta(board, depth, -9999, 9999, home_side);
+
+    // Extract the best move from the result
+    Move best_move = result.second;
+
+    // Log the score
+    msglog(1, "Best move has a score of %d.", result.first);
+
+    return best_move;
 }
 
 
@@ -249,62 +292,81 @@ Moves move_candidates(const Board &b, Player player) {
 }
 
 
-void restore_board(const Board& prevBoard) {
-    board = prevBoard;
-}
 
 
-bool board_full(const Board &b) {
-    for(auto &line: b) {
-        for(auto c: line) {
-            if(c == '-') {
-                return false;
+int position_score(const Board &b, const Player player) {
+    int score = 0;
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
+            if (b[i][j] == player) {
+                score += position_values[i][j];
+            } else if (b[i][j] == opponent(player)) {
+                score -= position_values[i][j];
             }
         }
     }
-    return true;
+    return score;
 }
 
-bool compare_moves(const Move &move1, const Move &move2, const Board &b, const Player player) {
-    Board board_after_move1 = play_move(b, move1, player);
-    Board board_after_move2 = play_move(b, move2, player);
 
-    int score1 = evaluate_board(board_after_move1, player);
-    int score2 = evaluate_board(board_after_move2, player);
+int mobility_score(const Board &b, const Player player) {
+    int player_mobility = move_candidates(b, player).size();
+    int opponent_mobility = move_candidates(b, opponent(player)).size();
 
-    return score1 > score2;
+    // Avoid division by zero
+    if (player_mobility + opponent_mobility == 0) {
+        return 0;
+    }
+
+    int mobility_diff = player_mobility - opponent_mobility;
+    float mobility_score = static_cast<float>(mobility_diff) / static_cast<float>(player_mobility + opponent_mobility);
+
+    return static_cast<int>(100 * mobility_score);
 }
 
-void sort_moves(Moves &moves, const Board &b, const Player player) {
-    std::sort(moves.begin(), moves.end(), [&b, player](const Move &move1, const Move &move2) {
-        return compare_moves(move1, move2, b, player);
-    });
-}
-
-Move search_next_move(int depth)
-{
-    // Call alphabeta and get the best move
-    std::pair<int, Move> result = alphabeta(board, depth, -9999, 9999, home_side);
-
-    // Extract the best move from the result
-    Move best_move = result.second;
-
-    // Log the score
-    msglog(1, "Best move has a score of %d.", result.first);
-
-    return best_move;
-}
 
 int evaluate_board(const Board &b, const Player player) 
 {
-    float position_weight = 0.2;
-    float mobility_weight = 0.8;
+    float position_weight = 0.5;
+    float mobility_weight = 0.5;
 
     int position_diff = position_score(b, player) - position_score(b, opponent(player));
     int mobility_diff = mobility_score(b, player) - mobility_score(b, opponent(player));
 
     return position_weight * position_diff + mobility_weight * mobility_diff;
 }
+
+
+bool compare_moves(
+    const Move &move1, const Move &move2,
+    const Board &b, 
+    const Player player, 
+    std::unordered_map<Move, int, MoveHasher> &move_scores) 
+{
+    if (move_scores.find(move1) == move_scores.end()) {
+        Board board_after_move1 = play_move(b, move1, player);
+        move_scores[move1] = evaluate_board(board_after_move1, player);
+    }
+
+    if (move_scores.find(move2) == move_scores.end()) {
+        Board board_after_move2 = play_move(b, move2, player);
+        move_scores[move2] = evaluate_board(board_after_move2, player);
+    }
+
+    return move_scores[move1] > move_scores[move2];
+}
+
+void sort_moves(Moves &moves, const Board &b, const Player player) {
+    std::unordered_map<Move, int, MoveHasher> move_scores;
+    std::sort(
+        moves.begin(), moves.end(), 
+        [&b, player, &move_scores](const Move &move1, const Move &move2) {
+        return compare_moves(move1, move2, b, player, move_scores);
+    });
+}
+
+
+
 
 std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player player)
 {
@@ -318,7 +380,7 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
 
     if (moves.empty())
     {
-        if (switch_player(b))
+        if (can_switch_player(b))
         {
             return alphabeta(b, depth - 1, alpha, beta, opponent(player));
         }
@@ -347,7 +409,7 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
             alpha = std::max(alpha, eval);
             if (beta <= alpha) 
             { 
-                msglog(0, "Pruned at counter %d, total moves %d", counter, moves.size());
+                msglog(2, "Pruned at counter %d, total moves %d", counter, moves.size());
                 break;
             }
         }
@@ -370,7 +432,7 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
             }
             beta = std::min(beta, eval);
             if (beta <= alpha) {
-                msglog(0, "Pruned at counter %d, total moves %d", counter, moves.size());
+                msglog(2, "Pruned at counter %d, total moves %d", counter, moves.size());
                 break;
             }
         }

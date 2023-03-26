@@ -20,6 +20,7 @@ Player parse_args(int argc, char *argv[]) {
 void broadcast_move(const Move& move) {
     int row, col;
     std::tie(row, col) = move;
+    msglog(1, "Broadcasted move : %d %d", row,col);
     std::cout << row << col << '\n' << std::flush;
 }
 
@@ -33,18 +34,43 @@ Move listen_for_broadcast()
 }
 
 
+void print_board()
+{
+    for (int i = 0; i < 8; i++) {
+        char row[18] = {'\0'};  // initialize row to null characters
+        for (int j = 0; j < 8; j++) {
+            row[j * 2] = board[i][j];  // set the character at the appropriate position in the row array
+            row[j * 2 + 1] = '|';      // set the separator character
+        }
+        msglog(0, "%s", row);  // print the row using the msglog() function
+    }
+}
+
+
 void play_move_locally(const Move& move) 
 {
+    if (std::get<0>(move) == -1 ) {
+        msglog(1, "{-1, -1} incoming from player %c", active_side);
+    }
+    msglog(1, "Move to be played (%d, %d) on local board",
+        std::get<0>(move),
+        std::get<1>(move)
+    );
+    print_board();
+
     if (is_valid_move(board, move, active_side))
     {
-       board = play_move(board, move, active_side);
+        board = play_move(board, move, active_side);
     } 
-    else {
+    else 
+    {
         msglog(1, "Failure!");
         msglog(1, "Current player : %c", active_side);
         exit(0);
-        }
+    }
 }
+
+
 
 
 int main(int argc, char *argv[]) {
