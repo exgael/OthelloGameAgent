@@ -2,13 +2,13 @@
 
 Player parse_args(int argc, char *argv[]) {
     if( argc != 2 ) {
-        std::cerr << "Utilisation :" << std::endl;
+        std::cerr << "Agent back Utilisation :" << std::endl;
         std::cerr << argv[0] << " [X|O]" << std::endl;
         exit(0);
     }
 
     if((argv[1][0] != 'X') && (argv[1][0] != 'O')) {
-        std::cerr << "Utilisation :" << std::endl;
+        std::cerr << "Agent back Utilisation :" << std::endl;
         std::cerr << argv[0] << " [X|O]" << std::endl;
          exit(0);
     }
@@ -54,8 +54,8 @@ void play_move_locally(const Move& move)
     } 
     else 
     {
-        msglog(1, "Failure!");
-        msglog(1, "Current player : %c", active_side);
+        msglog(1, "Agent back Failure!");
+        msglog(1, "Agent back Current player : %c", active_side);
         exit(0);
     }
 }
@@ -86,15 +86,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-    if (evaluate_board(board, home_side) > 0) {
-        msglog(0, "Won!");
-    } else {
-        msglog(0, "Lost!");
-    }
-    msglog(0, "Home : %d  vs Opponent : %d", 
-        evaluate_board(board, home_side), 
-        evaluate_board(board, opposing_side)
-    );
 
     return 0;
 }

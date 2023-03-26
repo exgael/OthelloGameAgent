@@ -3,8 +3,52 @@
 #include <cassert>
 #include <vector>
 #include <tuple>
-#include <ncurses.h>
+//#include <ncurses.h>
 
+
+using Coordinate = std::size_t; // Type used to represent the coordinates on the board
+using Move = std::tuple<Coordinate, Coordinate>; // Tuple type to represent a move on the board
+using Moves = std::vector<Move>; // Set type to represent a collection of unique moves
+
+/*  CONSTANTES  */
+
+constexpr Move RIGHT = {0, 1};
+constexpr Move LEFT = {0, -1};
+constexpr Move DOWN = {1, 0};
+constexpr Move UP = {-1, 0};
+constexpr Move UL = {-1, -1};
+constexpr Move UR = {-1, 1};
+constexpr Move DL = {1, -1};
+constexpr Move DR = {1, 1};
+
+
+// Valid direction to find neighbors
+const std::array<Moves, 9> DIRECTIONS = {{
+    {RIGHT, DOWN, DR},                           // top-left corner
+    {LEFT, DOWN, DL},                            // top-right corner
+    {RIGHT, LEFT, DOWN, DR, DL},               // top edge
+    {RIGHT, DOWN, UP, DR, UR},                 // left edge
+    {LEFT, DOWN, UP, UL, DL},                  // right edge
+    {UP, RIGHT, LEFT, UL, UR},                 // bottom edge
+    {UP, RIGHT, UR},                             // bottom-left corner
+    {UP, LEFT, UL},                              // bottom-right corner
+    {UP, DOWN, RIGHT, LEFT, UL, UR, DL, DR} // center
+}};
+
+// Lookup table to link board cell to valid neighbors 
+constexpr std::array<size_t, 64> DIRECTIONS_TABLE = {
+    0, 2, 2, 2, 2, 2, 2, 1,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    3, 8, 8, 8, 8, 8, 8, 4,
+    6, 5, 5, 5, 5, 5, 5, 7
+};
+
+// The number of element at each index of DIRECTIONS
+constexpr std::array<size_t, 9> DIRECTIONS_COUNT = {3, 3, 5, 5, 5, 5, 3, 3, 8};
 
 std::vector<std::vector<char>> board;
 char player = 'X';
@@ -16,46 +60,34 @@ void initBoard() {
     board[4][3] = 'O';
     board[4][4] = 'X';
 }
-
-void printBoard() {
-    clear();
-    for(auto &line: board) {
-        for(auto c: line) {
-            printw("%c ", c);
-        }
-        printw("\n");
-    }
-    printw("Player: %c\n", player);
-    refresh();
-}
-
+constexpr std::size_t DIM = 8;
 
 bool isValidMove(int x, int y, char player) {
-    if (x < 0 || x >= board.size() || y < 0 || y >= board[x].size()) return false;  // Vérifier si la case est dans les limites du plateau de jeu
-    if (board[x][y] != '-') return false;  // Vérifier si la case est vide
-
-    // Vérifier les huit directions autour de la case
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            if (i == 0 && j == 0) continue;  // On ignore la case actuelle
-          
-            int k = 1;
-            while (true) {
-                int newX = x + i * k;
-                int newY = y + j * k;
-                if (newX < 0 || newX >= board.size() || newY < 0 || newY >= board[newX].size()) break;  // Sortir si on est en dehors du plateau
-                if (board[newX][newY] == '-') break;  // Sortir si la case est vide
-                if (board[newX][newY] == player) {
-                    if (k > 1) {
-                        return true; // Si on a trouvé une pièce du joueur actuel après avoir trouvé une pièce de l'autre joueur, alors le coup est valide
-                    }
-                    break;
-                }
-                k++;
+    if (x < 0 || x >= DIM || y < 0 || y >= DIM || board[x][y] != '-') {
+        return false;
+    }
+    
+    const int index = DIRECTIONS_TABLE[x * 8 + y];
+    const auto &directions = DIRECTIONS[index];
+    size_t num_directions = DIRECTIONS_COUNT[index];
+    
+    for (size_t l = 0; l < num_directions; ++l) {
+        const auto &dir = directions[l];
+        int i = std::get<0>(dir);
+        int j = std::get<1>(dir);
+        int k = 1;
+        while (true) {
+            const Coordinate new_x = x + i * k;
+            const Coordinate new_y = y + j * k;
+            if (new_x < 0 || new_x >= DIM || new_y < 0 || new_y >= DIM) break;
+            if (board[new_x][new_y] == '-') break;
+            if (board[new_x][new_y] == player) {
+                if (k > 1) { return true; }
+                break;
             }
+            k++;
         }
     }
-  
     return false;
 }
 
@@ -127,25 +159,6 @@ int scoreX() {
     return X-O;
 }
 
-void afficherFin() {
-    clear();
-    for(auto &line: board) {
-        for(auto c: line) {
-            printw("%c ", c);
-        }
-        printw("\n");
-    }
-    int s = scoreX();
-    if(s > 0) {
-        printw("Player X a gagner de %d points !\n", s);
-    } else if(s < 0) {
-        printw("Player O a gagner de %d points !\n", -s);
-    } else {
-        printw("Egalité !\n");
-    }
-    refresh();
-}
-
 std::vector< std::tuple<int, int> > listDesCoupsPossible() {
 
     std::vector< std::tuple<int, int> > result;
@@ -186,6 +199,10 @@ int main(int argc, char *argv[]) {
 
         if(moi == player) {
             auto actionsPossible = listDesCoupsPossible();
+
+            if (actionsPossible.size() ==0 ) {
+                std::cerr << "OPPONENT SKIP TURN!" << std::endl;
+            }
 
             // TODO : CHOISIR LE COUPS A JOUER ////////////
             std::tie(row, col) = actionsPossible[ rand()%actionsPossible.size() ];  // Choix aléatoire
