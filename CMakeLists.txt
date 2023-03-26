@@ -27,6 +27,7 @@ include(CTest)
 enable_testing()
 
 add_subdirectory(src/Agent)
+add_subdirectory(src/AgentBack)
 add_subdirectory(src/BaseAgent)
 add_subdirectory(src/BaseAgentBack)
 add_subdirectory(src/codeEnv)

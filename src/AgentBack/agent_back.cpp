@@ -26,7 +26,6 @@ void msglog(const int log_level, const char* format, ...) {
 
 struct MoveHasher {
     std::size_t operator()(const Move &move) const {
-        // combine both value XOR
         return std::hash<int>{}(std::get<0>(move)) ^ std::hash<int>{}(std::get<1>(move));
     }
 };
@@ -209,6 +208,7 @@ bool switch_player(const Board &b) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, newPlayer)) {
                 active_side = newPlayer;  
+                msglog(3, "Agent back Switch occured"); 
                 return true;
             }
         }
@@ -216,10 +216,13 @@ bool switch_player(const Board &b) {
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, active_side)) {
+                msglog(3, "Agent back Active player remain");
                 return true;
             }
         }
     }
+
+    msglog(3, "Agent back No valid moves for either player");
     return false;
 }
 
@@ -228,6 +231,7 @@ bool can_switch_player(const Board &b) {
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, newPlayer)) {
+                msglog(3, "Agent back Switch occured"); 
                 return true;
             }
         }
@@ -235,10 +239,13 @@ bool can_switch_player(const Board &b) {
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
             if (is_valid_move(b, {i, j}, active_side)) {
+                msglog(3, "Agent back Active player remain");
                 return true;
             }
         }
     }
+
+    msglog(3, "Agent back No valid moves for either player");
     return false;
 }
 
@@ -262,6 +269,9 @@ Move search_next_move(int depth)
 
     // Extract the best move from the result
     Move best_move = result.second;
+
+    // Log the score
+    msglog(1, "Agent back Best move has a score of %d.", result.first);
 
     return best_move;
 }
@@ -356,53 +366,11 @@ void sort_moves(Moves &moves, const Board &b, const Player player) {
 }
 
 
-std::pair<int, Move> quiescence_search(Board &b, int alpha, int beta, Player player) {
-    int stand_pat = evaluate_board(b, player);
-
-    if (stand_pat >= beta) {
-        return {stand_pat, {-1, -1}};
-    }
-
-    if (alpha < stand_pat) {
-        alpha = stand_pat;
-    }
-
-    Moves moves = move_candidates(b, player);
-    sort_moves(moves, b, player);
-
-    if (moves.empty()) {
-        if (can_switch_player(b)) {
-            return quiescence_search(b, alpha, beta, opponent(player));
-        } else {
-            return {evaluate_board(b, player), {-1, -1}};
-        }
-    }
-
-    for (const Move &move : moves) {
-        Board new_board = play_move(b, move, player);
-        std::pair<int, Move> result = quiescence_search(new_board, -beta, -alpha, opponent(player));
-        int eval = -result.first;
-
-        if (eval >= beta) {
-            return {eval, move};
-        }
-
-        if (eval > alpha) {
-            alpha = eval;
-        }
-    }
-
-    return {alpha, {-1, -1}};
-}
 
 
 std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player player)
 {
-    if (depth == 0) 
-    {
-        return quiescence_search(b, alpha, beta, player);
-    }
-    else if (board_full(b))
+    if (depth == 0 || board_full(b))
     {
         return {evaluate_board(b, player), {-999, -999}};
     }
@@ -441,6 +409,7 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
             alpha = std::max(alpha, eval);
             if (beta <= alpha) 
             { 
+                msglog(2, "Agent back Pruned at counter %d, total moves %d", counter, moves.size());
                 break;
             }
         }
@@ -463,10 +432,10 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
             }
             beta = std::min(beta, eval);
             if (beta <= alpha) {
+                msglog(2, "Agent back Pruned at counter %d, total moves %d", counter, moves.size());
                 break;
             }
         }
         return {min_eval, best_move};
     }
 }
-
