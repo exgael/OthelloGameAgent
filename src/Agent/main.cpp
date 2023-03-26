@@ -27,15 +27,18 @@ void broadcast_move(const Move& move) {
 Move listen_for_broadcast()
 {
     std::string coups;
-    msglog(2, "Enter move (row, col): ");
     std::cin >> coups;
+    msglog(0, "coups: \"%d%d\"", coups.at(0) - '0', coups.at(1) - '0' );
     return {coups.at(0) - '0', coups.at(1) - '0'};
 }
 
 
 void play_move_locally(const Move& move) 
 {
-    if (is_valid_move(move, active_side)) play_move(move, active_side);
+    if (is_valid_move(board, move, active_side))
+    {
+       board = play_move(board, move, active_side);
+    } 
     else {
         msglog(1, "Failure!");
         msglog(1, "Current player : %c", active_side);
@@ -53,24 +56,18 @@ int main(int argc, char *argv[]) {
 
     init_agent( 
         moi,
-        0
+        1
     );
 
     msglog(1, "Agent initialized.");
 
-    int turn_count = 0;
     while (true) {
-
         Move move;
-
-
         if (home_side == active_side) {
-            msglog(1, "Agent's turn: %d", turn_count);
-            move = search_next_move();
+            move = search_next_move( 6 );
 
             msglog(1, "Broadcasting move...");
             broadcast_move(move);
-            turn_count += 1;
 
             msglog(1, "Agent play (%d, %d) on local board",
             std::get<0>(move),
@@ -88,13 +85,19 @@ int main(int argc, char *argv[]) {
 
         play_move_locally(move);
 
-        if(!switch_player()) {
+        if(!switch_player(board)) {
             break;
         }
     }
-
-    msglog(0, "Home %d", score_player(home_side));
-    msglog(0, "Opposing %d", score_player(opposing_side));
+    if (evaluate_board(board, home_side) > 0) {
+        msglog(0, "Won!");
+    } else {
+        msglog(0, "Lost!");
+    }
+    msglog(0, "Home : %d  vs Opponent : %d", 
+        evaluate_board(board, home_side), 
+        evaluate_board(board, opposing_side)
+    );
 
     return 0;
 }

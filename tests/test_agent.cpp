@@ -13,10 +13,10 @@ TEST(AgentTest, InitBoard) {
 // Test the isValidMove function
 TEST(AgentTest, IsValidMove) {
     initBoard();
-    ASSERT_TRUE(is_valid_move({2, 4}, 'X'));
-    ASSERT_FALSE(is_valid_move({4, 1}, 'X'));
-    ASSERT_FALSE(is_valid_move({3, 3}, 'X'));
-    ASSERT_FALSE(is_valid_move({3, 3}, 'O'));
+    ASSERT_TRUE(is_valid_move(board, {2, 4}, 'X'));
+    ASSERT_FALSE(is_valid_move(board, {4, 1}, 'X'));
+    ASSERT_FALSE(is_valid_move(board, {3, 3}, 'X'));
+    ASSERT_FALSE(is_valid_move(board, {3, 3}, 'O'));
 }
 
 // Test the boardFull function
@@ -34,16 +34,17 @@ TEST(AgentTest, BoardFull) {
 }
 
 
+
 TEST(SwitchPlayerTest, BasicSwitch) {
     initBoard();
 
     active_side = 'X';
-    bool can_switch_to_O = switch_player();
+    bool can_switch_to_O = switch_player(board);
     ASSERT_TRUE(can_switch_to_O);
     ASSERT_EQ(active_side, 'O');
 
     active_side = 'O';
-    bool can_switch_to_X = switch_player();
+    bool can_switch_to_X = switch_player(board);
     ASSERT_TRUE(can_switch_to_X);
     ASSERT_EQ(active_side, 'X');
 }
@@ -58,7 +59,7 @@ TEST(SwitchPlayerTest, NoValidMoves) {
         }
     }
     active_side = 'O';
-    bool can_switch_to_X = switch_player();
+    bool can_switch_to_X = switch_player(board);
     ASSERT_FALSE(can_switch_to_X);
 }
 
@@ -72,7 +73,7 @@ TEST(IS_VALID_MOVE, EmptyBoard_NoValidMoves) {
     for(int i = 0; i < 8; i++ ) {
         for(int j = 0; j < 8; j++ ) {
             Move move = {i, j};
-            EXPECT_FALSE(is_valid_move(move, player));
+            EXPECT_FALSE(is_valid_move(board, move, player));
         }
     }
 }
@@ -90,9 +91,9 @@ TEST(IS_VALID_MOVE, FullBoard_NoValidMoves) {
         for(int j = 0; j < 8; j++ ) {
             Move move = {i, j};
             Player player = 'O';
-            EXPECT_FALSE(is_valid_move(move, player));
+            EXPECT_FALSE(is_valid_move(board, move, player));
             player = 'X';
-            EXPECT_FALSE(is_valid_move(move, player));
+            EXPECT_FALSE(is_valid_move(board, move, player));
         }
     }
 }
@@ -102,7 +103,7 @@ TEST(IS_VALID_MOVE, MoveOutOfBounds) {
 
     Move move = {-1, -1};
     Player player = 'O';
-    EXPECT_FALSE(is_valid_move(move, player));
+    EXPECT_FALSE(is_valid_move(board, move, player));
 }
 
 
@@ -111,13 +112,13 @@ TEST(IS_VALID_MOVE, MoveDoesNotFlipAnyPieces) {
 
     Move move = {2, 3};
     Player player = 'X';
-    EXPECT_FALSE(is_valid_move({2, 3}, player));
-    EXPECT_FALSE(is_valid_move({3, 2}, player));
+    EXPECT_FALSE(is_valid_move(board, {2, 3}, player));
+    EXPECT_FALSE(is_valid_move(board, {3, 2}, player));
     player = 'O';
-    EXPECT_FALSE(is_valid_move({2, 4}, player));
-    EXPECT_FALSE(is_valid_move({4, 2}, player));
-    EXPECT_FALSE(is_valid_move({5, 5}, player));
-    EXPECT_FALSE(is_valid_move({6, 4}, player));
+    EXPECT_FALSE(is_valid_move(board, {2, 4}, player));
+    EXPECT_FALSE(is_valid_move(board, {4, 2}, player));
+    EXPECT_FALSE(is_valid_move(board, {5, 5}, player));
+    EXPECT_FALSE(is_valid_move(board, {6, 4}, player));
 }
 
 TEST(PLAY_MOVE, GameTest1) {
@@ -129,36 +130,36 @@ TEST(PLAY_MOVE, GameTest1) {
     // turn 1
     player = 'X';
     move = {5, 3};
-    EXPECT_TRUE(is_valid_move(move, player));
-    play_move(move, player);
+    EXPECT_TRUE(is_valid_move(board, move, player));
+    board = play_move(board, move, player);
     assert(board[3][3] == 'X');
     assert(board[4][3] == 'X');
     assert(board[5][3] == 'X');
 
     player = 'O';
     move = {5, 2};
-    EXPECT_TRUE(is_valid_move(move, player));
-    play_move(move, player);
+    EXPECT_TRUE(is_valid_move(board, move, player));
+    board = play_move(board, move, player);
     assert(board[5][2] == 'O');
     assert(board[4][3] == 'O');
     assert(board[3][4] == 'O');
 
     // turn 2
     player = 'X';
-    auto moves = move_candidates(player);
+    auto moves = move_candidates(board, player);
     EXPECT_TRUE(moves.size() == 4);
 
     move = {5, 1};
-    EXPECT_TRUE(is_valid_move(move, player));
-    play_move(move, player);
+    EXPECT_TRUE(is_valid_move(board, move, player));
+    board = play_move(board, move, player);
     assert(board[5][1] == 'X');
     assert(board[5][2] == 'X');
     assert(board[5][3] == 'X');
 
     player = 'O';
     move = {4, 5};
-    EXPECT_TRUE(is_valid_move(move, player));
-    play_move(move, player);
+    EXPECT_TRUE(is_valid_move(board, move, player));
+    board = play_move(board, move, player);
     assert(board[4][5] == 'O');
     assert(board[4][4] == 'O');
     assert(board[4][3] == 'O');

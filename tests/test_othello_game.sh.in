@@ -18,7 +18,7 @@ else
 fi
 
 # Check if the word "success" is present in test.log
-if grep -q "success\|Fin partie \!" $log_file; then
+if grep -q "Won!" $log_file; then
     echo "Test $test_num passed."
 else
     echo "Test $test_num failed."

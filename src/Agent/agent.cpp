@@ -1,7 +1,11 @@
 #include "agent.h"
-
+#include <stack>
+#include <set>
+#include <algorithm>
 
 /*  CONSTANTES  */
+
+constexpr std::size_t DIM = 8;
 
 constexpr Move RIGHT =  { 0,  1};
 constexpr Move LEFT  =  { 0, -1};
@@ -12,9 +16,8 @@ constexpr Move UR    =  {-1,  1};
 constexpr Move DL    =  { 1, -1};
 constexpr Move DR    =  { 1,  1};
 
-
 // Valid direction to find neighbors
-const std::array<Moves, 9> DIRECTIONS = {{
+constexpr std::array<std::array<Move, 8>, 9> DIRECTIONS = {{
     {RIGHT, DOWN, DR},                           // top-left corner
     {LEFT, DOWN, DL},                            // top-right corner
     {RIGHT, LEFT, DOWN, DR, DL},               // top edge
@@ -62,14 +65,21 @@ void msglog(const int log_level, const char* format, ...) {
     std::cerr << buf << std::endl;
 }
 
+
+Player opponent(Player player) {
+    return player == 'X' ? 'O' : 'X';
+}
+
+
 void init_agent(Player home_side_symbol, int verbose) 
 {
     home_side = home_side_symbol;
-    opposing_side = home_side == 'X' ? 'O' : 'X';
+    opposing_side = opponent(home_side);
     srand(time(NULL));
     initBoard();
     verbosity = verbose;
 }
+
 
 void initBoard() {   
     for (auto &row : board) {
@@ -82,12 +92,12 @@ void initBoard() {
 }
 
 
-bool is_valid_move(const Move &move, const Player player) 
+bool is_valid_move(const Board &b, const Move &move, const Player player) 
 {
     const Coordinate x = std::get<0>(move);
     const Coordinate y = std::get<1>(move);
 
-    if (x >= DIM || y >= DIM || board[x][y] != '-') {
+    if (x >= DIM || y >= DIM || b[x][y] != '-') {
         return false;
     }
     
@@ -107,9 +117,9 @@ bool is_valid_move(const Move &move, const Player player)
                 || new_x >= DIM 
                 || new_y < 0 
                 || new_y >= DIM 
-                || board[new_x][new_y] == '-') break;
+                || b[new_x][new_y] == '-') break;
                 
-            if (board[new_x][new_y] == player) {
+            if (b[new_x][new_y] == player) {
                 if (k > 1) { return true; }
                 break;
             }
@@ -120,12 +130,12 @@ bool is_valid_move(const Move &move, const Player player)
 }
 
 
-Board play_move(const Move &move, const Player player) {
-    assert (is_valid_move(move, player));
-    Board prevBoard = board;
+Board play_move(const Board &b, const Move &move, const Player player) {
+    assert (is_valid_move(b, move, player) );
+    Board new_board = b;
     int x = std::get<0>(move);
     int y = std::get<1>(move);
-    board[x][y] = player;
+    new_board[x][y] = player;
 
     const int index = DIRECTIONS_TABLE[x * 8 + y];
     const auto &directions = DIRECTIONS[index];
@@ -140,13 +150,13 @@ Board play_move(const Move &move, const Player player) {
             int newX = x + i * k;
             int newY = y + j * k;
             if (newX < 0 || newX >= DIM || newY < 0 || newY >= DIM) break;
-            if (board[newX][newY] == '-') break;
-            if (board[newX][newY] == player) {
+            if (new_board[newX][newY] == '-') break;
+            if (new_board[newX][newY] == player) {
                 if (k > 1) {
                     for(int k2 = k-1; k2 > 0; k2--) {
                         int newX = x + i * k2;
                         int newY = y + j * k2;
-                        board[newX][newY] = player;
+                        new_board[newX][newY] = player;
                     }
                     break;
                 }
@@ -155,15 +165,15 @@ Board play_move(const Move &move, const Player player) {
             k++;
         }
     }
-    return prevBoard;
+    return new_board;
 }
 
 
-bool switch_player() {
+bool switch_player(const Board &b) {
     char newPlayer = (active_side == 'X') ? 'O' : 'X';
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
-            if (is_valid_move({i, j}, newPlayer)) {
+            if (is_valid_move(b, {i, j}, newPlayer)) {
                 active_side = newPlayer;  
                 msglog(2, "Switch occured"); 
                 return true;
@@ -172,48 +182,70 @@ bool switch_player() {
     }
     for (int i = 0; i < board.size(); i++) {
         for (int j = 0; j < board[i].size(); j++) {
-            if (is_valid_move({i, j}, active_side)) {
-                 msglog(2, "Active player remain");
+            if (is_valid_move(b, {i, j}, active_side)) {
+                msglog(2, "Active player remain");
                 return true;
             }
         }
     }
 
-    if ( verbosity ) {
-        msglog(2, "No valid moves for either player");
-    }
-
+    msglog(2, "No valid moves for either player");
     return false;
 }
 
-int score_player(const Player player) {
-    int X = 0;
-    int O = 0;
+constexpr int position_values[8][8] = {
+    {100, -20,  10,   5,   5,  10, -20, 100},
+    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
+    { 10,  -2,   1,   1,   1,   1,  -2,  10},
+    {  5,  -2,   1,   0,   0,   1,  -2,   5},
+    {  5,  -2,   1,   0,   0,   1,  -2,   5},
+    { 10,  -2,   1,   1,   1,   1,  -2,  10},
+    {-20, -50,  -2,  -2,  -2,  -2, -50, -20},
+    {100, -20,  10,   5,   5,  10, -20, 100}
+};
 
-    for(auto &line: board) {
-        for(auto c: line) {
-            X += (c == 'X');
-            O += (c == 'O');
-        }
-    }
-
-    if (player == 'X') return X-O;
-    else return O-X;
-}
-
-Moves move_candidates(Player player) {
-    Moves moves;
-
+int position_score(const Board &b, const Player player) {
+    int score = 0;
     for (int i = 0; i < DIM; i++) {
         for (int j = 0; j < DIM; j++) {
-            if (is_valid_move({i, j}, player))
-            {
-                moves.push_back({i,j});
+            if (b[i][j] == player) {
+                score += position_values[i][j];
+            } else if (b[i][j] == opponent(player)) {
+                score -= position_values[i][j];
             }
         }
     }
+    return score;
+}
 
-    return moves;
+int mobility_score(const Board &b, const Player player) {
+    int player_mobility = move_candidates(b, player).size();
+    int opponent_mobility = move_candidates(b, opponent(player)).size();
+
+    // Avoid division by zero and return a proper value if both players have 0 mobility.
+    if (player_mobility + opponent_mobility == 0) {
+        return 0;
+    }
+
+    int mobility_diff = player_mobility - opponent_mobility;
+    float mobility_score = static_cast<float>(mobility_diff) / static_cast<float>(player_mobility + opponent_mobility);
+
+    return static_cast<int>(100 * mobility_score);
+}
+
+
+Moves move_candidates(const Board &b, Player player) {
+    Moves candidates;
+
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
+            if (is_valid_move(b, {i, j}, player))
+            {
+                candidates.push_back({i,j});
+            }
+        }
+    }
+    return candidates;
 }
 
 
@@ -222,8 +254,8 @@ void restore_board(const Board& prevBoard) {
 }
 
 
-bool board_full(Board board) {
-    for(auto &line: board) {
+bool board_full(const Board &b) {
+    for(auto &line: b) {
         for(auto c: line) {
             if(c == '-') {
                 return false;
@@ -233,142 +265,116 @@ bool board_full(Board board) {
     return true;
 }
 
+bool compare_moves(const Move &move1, const Move &move2, const Board &b, const Player player) {
+    Board board_after_move1 = play_move(b, move1, player);
+    Board board_after_move2 = play_move(b, move2, player);
 
-Move search_next_move()
+    int score1 = evaluate_board(board_after_move1, player);
+    int score2 = evaluate_board(board_after_move2, player);
+
+    return score1 > score2;
+}
+
+void sort_moves(Moves &moves, const Board &b, const Player player) {
+    std::sort(moves.begin(), moves.end(), [&b, player](const Move &move1, const Move &move2) {
+        return compare_moves(move1, move2, b, player);
+    });
+}
+
+Move search_next_move(int depth)
 {
-    int best_score = -999;
-    Move best_move = {-1, -1};
-    Moves moves = move_candidates(home_side);
-    msglog(2, "Num candidates: %d", moves.size());
+    // Call alphabeta and get the best move
+    std::pair<int, Move> result = alphabeta(board, depth, -9999, 9999, home_side);
 
-    for (const Move move : moves)
-    {
-        assert(active_side == home_side);
-        Board orginal_board = play_move(move, home_side);
+    // Extract the best move from the result
+    Move best_move = result.second;
 
-        switch_player();
-        
-        int score;
-        if (home_side == active_side) {
-            score = alphabeta(6, -999, 999, home_side);
-        } else {
-            score = alphabeta(6, -999, 999, opposing_side);
-        }
-
-        restore_board(orginal_board);
-        active_side = home_side;
-
-        if (score > best_score)
-        {
-            best_score = score;
-            best_move = move;
-        }
-    }
+    // Log the score
+    msglog(1, "Best move has a score of %d.", result.first);
 
     return best_move;
 }
 
-int alphabeta(int depth, int alpha, int beta, Player player) {
-    if (depth == 0 || board_full(board)) {
-        if ( verbosity ) {
-            if (depth == 0 && board_full(board)) {
-                msglog(3, "Zero depth and board full");
-            }
-            else if (depth == 0 ) {
-                 msglog(3, "Zero depth.");
-            } else {
-                msglog(3, "Board full.");
-            }
+int evaluate_board(const Board &b, const Player player) 
+{
+    float position_weight = 0.2;
+    float mobility_weight = 0.8;
 
-        }
-        return score_player(player); // Evaluate the board state when reaching the specified depth or no moves left
+    int position_diff = position_score(b, player) - position_score(b, opponent(player));
+    int mobility_diff = mobility_score(b, player) - mobility_score(b, opponent(player));
+
+    return position_weight * position_diff + mobility_weight * mobility_diff;
+}
+
+std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player player)
+{
+    if (depth == 0 || board_full(b))
+    {
+        return {evaluate_board(b, player), {-999, -999}};
     }
 
-    if (player == home_side) {
-        int maxEval = -999; // Set to a very small value
+    Moves moves = move_candidates(b, player);
+    sort_moves(moves, b, player);
 
-        for (int i = 0; i < board.size(); i++) {
-            for (int j = 0; j < board[i].size(); j++) {
-                if (is_valid_move({i, j}, home_side)) {
+    if (moves.empty())
+    {
+        if (switch_player(b))
+        {
+            return alphabeta(b, depth - 1, alpha, beta, opponent(player));
+        }
+        else
+        {
+            return {evaluate_board(b, player), {-1, -1}};
+        }
+    }
 
-                    msglog(3, "Alpha beta maximizing part.");
-                    msglog(3, "%c move : %d %d", active_side, i, j);
-
-                    Board prev_board = play_move({i, j}, home_side);
-
-                    msglog(3, "Alpha beta prepare minimizing. Player switch.");
-
-                    if (! switch_player()) {
-                        return score_player(home_side);
-                    }
-
-                    msglog(3, "After switchPlayer(): active side is: %c", active_side);
-
-                    int eval;
-                    // If home_side cannot play, keep opposing_side
-                    if (home_side == active_side) {
-                        eval = alphabeta(depth - 1, alpha, beta, home_side);
-                    } else {
-                        eval = alphabeta(depth - 1, alpha, beta, opposing_side);
-                    }
-
-                    msglog(3, "Move : %d %d, Eval : %d", i, j, eval);
-
-                    restore_board(prev_board);
-
-                    active_side = home_side;
-
-                    maxEval = std::max(maxEval, eval);
-                    alpha = std::max(alpha, eval);
-                    if (beta <= alpha) {
-                        break;
-                    }
-                }
+    Move best_move = {-1, -1};
+    if (player == home_side)
+    {
+        int max_eval = -9999;
+        int counter = 0;
+        for (const Move &move : moves)
+        {
+            counter  += 1;
+            Board new_board = play_move(b, move, player);
+            std::pair<int, Move> result = alphabeta(new_board, depth - 1, alpha, beta, opponent(player));
+            int eval = result.first;
+            if (eval > max_eval)
+            {
+                max_eval = eval;
+                best_move = move;
+            }
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha) 
+            { 
+                msglog(0, "Pruned at counter %d, total moves %d", counter, moves.size());
+                break;
             }
         }
-        return maxEval;
-    } else {
-        int minEval = 999; // Set to a very large value
-
-        for (int i = 0; i < board.size(); i++) {
-            for (int j = 0; j < board[i].size(); j++) {
-                 if (is_valid_move({i, j}, opposing_side)) {
-                    msglog(3, "Alpha beta maximizing part.");
-                    msglog(3, "%c move : %d %d", active_side, i, j);
-
-                    Board prev_board = play_move({i, j}, opposing_side);
-
-                    msglog(3, "Alpha beta prepare minimizing. Player switch.");
-
-                    if (! switch_player()) {
-                        return score_player(opposing_side);
-                    }
-
-                    msglog(3, "After switchPlayer(): active side is: %c", active_side);
-
-                    int eval;
-                    // If home_side cannot play, keep opposing_side
-                    if (opposing_side == active_side) {
-                        eval = alphabeta(depth - 1, alpha, beta, opposing_side);
-                    } else {
-                        eval = alphabeta(depth - 1, alpha, beta, home_side);
-                    }
-
-                    msglog(3, "Move : %d %d, Eval : %d", i, j, eval);
-
-                    restore_board(prev_board);
-
-                    active_side = opposing_side;
-
-
-                    minEval = std::min(minEval, eval);
-                    beta = std::min(beta, eval);
-                    if (beta <= alpha) {
-                        break;
-                    }
-                }
+        return {max_eval, best_move};
+    }
+    else // player to minimize
+    {
+        int min_eval = 9999;
+        int counter = 0;
+        for (const Move &move : moves)
+        {
+            counter  += 1;
+            Board new_board = play_move(b, move, player);
+            std::pair<int, Move> result = alphabeta(new_board, depth - 1, alpha, beta, opponent(player));
+            int eval = result.first;
+            if (eval < min_eval)
+            {
+                min_eval = eval;
+                best_move = move;
+            }
+            beta = std::min(beta, eval);
+            if (beta <= alpha) {
+                msglog(0, "Pruned at counter %d, total moves %d", counter, moves.size());
+                break;
             }
         }
-        return minEval;
+        return {min_eval, best_move};
     }
 }
+
