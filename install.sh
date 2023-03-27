@@ -14,7 +14,4 @@ cd build
 # Run make to compile the project
 make
 
-# Run the tests
-make test
-
 
