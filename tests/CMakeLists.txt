@@ -15,9 +15,7 @@ gtest_discover_tests(test_agent)
 
 
 configure_file(benchmark.sh benchmark.sh @ONLY)
-configure_file(train.sh train.sh @ONLY)
-configure_file(config.txt config.txt @ONLY)
 
-#add_test(NAME benchmark
-#  COMMAND benchmark.sh 1
-#)
+add_test(NAME benchmark
+  COMMAND benchmark.sh
+)
