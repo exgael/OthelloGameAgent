@@ -96,6 +96,7 @@ Player active_side = 'X';
 Player home_side;
 Player opposing_side;
 int verbosity;
+double weight;
 
 
 /*  FUNCTION IMPLEMENTATION  */
@@ -317,8 +318,8 @@ int mobility_score(const Board &b, const Player player) {
 
 int evaluate_board(const Board &b, const Player player) 
 {
-    float position_weight = 0.5;
-    float mobility_weight = 0.5;
+    float position_weight = weight;
+    float mobility_weight = 1-weight;
 
     int position_diff = position_score(b, player) - position_score(b, opponent(player));
     int mobility_diff = mobility_score(b, player) - mobility_score(b, opponent(player));
@@ -400,7 +401,7 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
 {
     if (depth == 0) 
     {
-        return quiescence_search(b, alpha, beta, player);
+        return {evaluate_board(b, player), {-999, -999}};
     }
     else if (board_full(b))
     {

@@ -1,6 +1,0 @@
-add_library(core_base_agent_back
-base_agent_back.cpp
-)
-
-add_executable(base_agent_back base_agent_back.cpp)
-target_link_libraries(base_agent_back PRIVATE core_base_agent_back)

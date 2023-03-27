@@ -1,5 +1,28 @@
 #include "agent.h"
 
+#include <fstream>
+#include <regex>
+#include <string>
+
+
+
+void read_config_file() {
+  std::ifstream file("../tests/config.txt");
+  if (file.is_open()) {
+    std::string line;
+    while (getline(file, line)) {
+      std::regex pattern("var1\\s*:\\s*([0-9]*\\.?[0-9]+)");
+      std::smatch match;
+      if (std::regex_search(line, match, pattern)) {
+        weight = std::stod(match[1]);
+        break; // stop searching after finding var1 value
+      }
+    }
+    file.close();
+  }
+}
+
+
 Player parse_args(int argc, char *argv[]) {
     if( argc != 2 ) {
         std::cerr << "Utilisation :" << std::endl;
@@ -45,6 +68,24 @@ void print_board()
     }
 }
 
+int get_score(Player player) {
+    int score = 0;
+
+    for(auto &line: board) {
+        for(auto c: line) {
+            score += (c == player);
+        }
+    }
+    return score;
+}
+
+void print_score() {
+    msglog(0, "X : %d", get_score('X'));
+    msglog(0, "O : %d", get_score('O'));
+}
+
+
+
 
 void play_move_locally(const Move& move) 
 {
@@ -66,6 +107,8 @@ void play_move_locally(const Move& move)
 int main(int argc, char *argv[]) {
     char moi = parse_args(argc, argv);
 
+    read_config_file();
+
     init_agent( 
         moi,
         1
@@ -74,7 +117,7 @@ int main(int argc, char *argv[]) {
     while (true) {
         Move move;
         if (home_side == active_side) {
-            move = search_next_move( 8 );
+            move = search_next_move( 6 );
             broadcast_move(move);
         } else {    
             move = listen_for_broadcast();
@@ -86,15 +129,13 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-    if (evaluate_board(board, home_side) > 0) {
+    if (get_score(home_side) > get_score(opposing_side)) {
         msglog(0, "Won!");
     } else {
         msglog(0, "Lost!");
     }
-    msglog(0, "Home : %d  vs Opponent : %d", 
-        evaluate_board(board, home_side), 
-        evaluate_board(board, opposing_side)
-    );
+
+    print_score();
 
     return 0;
 }

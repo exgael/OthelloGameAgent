@@ -32,6 +32,7 @@ extern Player       home_side;     // The home player's symbol ('X' or 'O').
 extern Player       opposing_side; // The opposing player's symbol ('X' or 'O').
 extern int          verbosity;     // The verbosity level for logging and debugging.
 
+extern double weight; // global variable to store weight value during training
 
 void msglog( const int log_level, const char* format, ... );
 
