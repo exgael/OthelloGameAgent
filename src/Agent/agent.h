@@ -8,6 +8,7 @@
 #include <tuple>
 #include <cstdarg>
 #include <array>
+#include <unordered_map>
 
 // 2D array of char to represent the game
 using Board = std::array<std::array<char, 8>, 8>;
@@ -30,35 +31,34 @@ extern Player home_side;     // The home player's symbol ('X' or 'O').
 extern Player opposing_side; // The opposing player's symbol ('X' or 'O').
 extern int verbosity;        // The verbosity level for logging and debugging.
 
+
+/*  STRUCT TO HASH MOVE  */
+
+struct hash_move
+{
+    std::size_t operator()(const Move &move) const
+    {
+        // combine both value via XOR
+        return std::hash<int>{}(std::get<0>(move)) ^ std::hash<int>{}(std::get<1>(move));
+    }
+};
+
 void msglog(const int log_level, const char *format, ...);
 
 /**
  * @brief Initializes the game agent with the specified player symbol and verbosity level.
- *
- * This function sets up the game agent by initializing the home and opposing side symbols,
- * seeding the random number generator, initializing the game board, and setting the verbosity level.
- *
  * @param home_side_symbol The symbol for the agent's side ('X' or 'O').
  * @param verbose The verbosity level for logging and debugging purposes.
  */
 void init_agent(Player home_side_symbol, int verbose = 0);
 
 /**
-Initializes the game board with the starting position.
-The board is represented by a 8x8 array of characters,
-with each cell containing a '-' character to indicate an empty cell,
-an 'X' character to indicate a cell occupied by the X player,
-or an 'O' character to indicate a cell occupied by the O player.
-The starting position has the four central cells occupied by two X and two O pieces.
-*/
+ * @brief Init the game board with the starting position.
+ */
 void initBoard();
 
 /**
  * @brief Returns the opponent of the given player.
- *
- * This function returns the opposing player based on the input player.
- * If the input player is 'X', the function returns 'O', and vice versa.
- *
  * @param player The input player ('X' or 'O').
  * @return Player The opponent of the input player.
  */
@@ -66,12 +66,6 @@ Player opponent(Player player);
 
 /**
  * @brief Determines if the active player should be switched or remains the same.
- *
- * The function checks if the new player has any valid moves.
- *   - If yes, the active player is switched.
- *   - If the new player has no valid moves, the function checks if the current active player has any valid moves.
- *   - If neither player has any valid moves, the game is considered over.
- *
  * @param b The board state.
  * @return true If the active player is switched or remains the same due to valid moves available.
  * @return false If there are no valid moves for either player, indicating the game is over.
@@ -87,10 +81,6 @@ Move search_next_move(int depth);
 
 /**
  * @brief function compares two moves by their score.
- * It calculates the score of the moves using an unordered_map. If the score of a move is
- * not found in the map, it calculates the score by playing the move on a copy of the
- * given board, then evaluating the new board using the given player's evaluation function,
- * and storing the score in the map for later use.
  * @param move1 The first move to be compared.
  * @param move2 The second move to be compared.
  * @param b The board.
@@ -105,9 +95,7 @@ bool compare_moves(
     std::unordered_map<Move, int, hash_move> &move_scores);
 
 /**
- * Sorts a vector of moves based on their scores in the given board state and for the specified player.
- * The function uses an unordered map to store the scores of each move, and then sorts the moves
- * in decreasing order of their scores using a lambda function as the sorting criteria.
+ * @brief Sorts a vector of moves based on their scores in the given board state and for the specified player.
  * @param moves A reference to a vector of moves to be sorted.
  * @param b The current board state.
  * @param player The player for whom the scores are calculated.
@@ -115,7 +103,7 @@ bool compare_moves(
 void sort_moves(Moves &moves, const Board &b, const Player player);
 
 /**
- * Applies the alpha-beta pruning algorithm to recursively evaluate the best move for the given player up to the specified depth.
+ * @brief Applies the alpha-beta pruning algorithm to recursively evaluate the best move for the given player up to the specified depth.
  * @param b The current board state.
  * @param depth The search depth.
  * @param alpha The best evaluation score found so far for the maximizing player.
@@ -127,12 +115,6 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
 
 /**
  * @brief Determines if a given move is valid for the passed game board and player.
- *
- * A move is considered valid if it satisfies the following conditions:
- * - The specified coordinates are within the bounds of the game board.
- * - The specified position is empty.
- * - The move captures at least one opposing piece in any of the eight directions from the move position.
- *
  * @param b The board state.
  * @param move The move coordinates to be checked for validity.
  * @param player The player making the move ('X' or 'O').
@@ -142,12 +124,8 @@ std::pair<int, Move> alphabeta(Board &b, int depth, int alpha, int beta, Player 
 bool is_valid_move(const Board &b, const Move &move, const Player player);
 
 /**
- * @brief Generates a list of valid moves for the given player on the current board state.
- *
- * The function iterates through all the positions on the board and checks for valid moves
- * for the specified player. It collects all valid moves and returns them as a vector.
- *
- * @param b The current board state.
+ * @brief Eavluate a list of valid moves for the given player on the current board state.
+ * @param b The given board state.
  * @param player The player for whom valid moves are to be determined ('X' or 'O').
  * @return Moves A list of valid moves for the specified player on the current board state.
  */
@@ -155,11 +133,6 @@ Moves move_candidates(const Board &b, Player player);
 
 /**
  * @brief Plays a move on the board and updates the board state accordingly.
- *
- * The function assumes the move is valid and asserts the validity before proceeding.
- * It updates the board by placing the player's symbol at the specified move position and
- * capturing any opponent's pieces in line with the move in any of the eight directions.
- *
  * @param b The current board state.
  * @param move The move coordinates to be played.
  * @param player The player making the move ('X' or 'O').
@@ -169,15 +142,16 @@ Board play_move(const Board &b, const Move &move, const Player player);
 
 /**
  * @brief Checks if the game board is full (i.e., no empty cells left).
- *
- * Iterates through the board cells to determine if any cells are empty.
- * If an empty cell is found, the board is considered not full, and the function returns false.
- * If no empty cells are found, the board is considered full, and the function returns true.
- *
  * @param b The current board state.
  * @return true If the board is full.
  * @return false If there are empty cells in the board.
  */
 bool board_full(const Board &b);
 
+/**
+ * @brief function calculates a score for a given board position based on the position weight and mobility weight.
+ * @param b: the board object to evaluate
+ * @param player: the player for whom to evaluate the score
+ * @return an integer score for the given board position
+ */
 int evaluate_board(const Board &b, const Player player);

@@ -2,7 +2,6 @@
 #include <stack>
 #include <set>
 #include <algorithm>
-#include <unordered_map>
 
 /*  LOG UTILITY  */
 
@@ -22,16 +21,7 @@ void msglog(const int log_level, const char *format, ...)
     std::cerr << buf << std::endl;
 }
 
-/*  STRUCT TO STORE MOVE SCORE  */
 
-struct hash_move
-{
-    std::size_t operator()(const Move &move) const
-    {
-        // combine both value via XOR
-        return std::hash<int>{}(std::get<0>(move)) ^ std::hash<int>{}(std::get<1>(move));
-    }
-};
 
 /*  CONSTANTES  */
 
@@ -210,6 +200,33 @@ Board play_move(const Board &b, const Move &move, const Player player)
     return new_board;
 }
 
+bool switch_player(const Board &b)
+{
+    char newPlayer = (active_side == 'X') ? 'O' : 'X';
+    for (int i = 0; i < board.size(); i++)
+    {
+        for (int j = 0; j < board[i].size(); j++)
+        {
+            if (is_valid_move(b, {i, j}, newPlayer))
+            {
+                active_side = newPlayer;
+                return true;
+            }
+        }
+    }
+    for (int i = 0; i < board.size(); i++)
+    {
+        for (int j = 0; j < board[i].size(); j++)
+        {
+            if (is_valid_move(b, {i, j}, active_side))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool can_switch_player(const Board &b)
 {
     char newPlayer = (active_side == 'X') ? 'O' : 'X';
@@ -318,8 +335,8 @@ int mobility_score(const Board &b, const Player player)
 
 int evaluate_board(const Board &b, const Player player)
 {
-    float position_weight = 0.8;
-    float mobility_weight = 0.2;
+    float position_weight = 0.6; // seems to work okay
+    float mobility_weight = 0.4;
 
     int position_diff = position_score(b, player) - position_score(b, opponent(player));
     int mobility_diff = mobility_score(b, player) - mobility_score(b, opponent(player));

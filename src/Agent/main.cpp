@@ -67,33 +67,6 @@ int get_score(Player player)
     return score;
 }
 
-bool switch_player(const Board &b)
-{
-    char newPlayer = (active_side == 'X') ? 'O' : 'X';
-    for (int i = 0; i < board.size(); i++)
-    {
-        for (int j = 0; j < board[i].size(); j++)
-        {
-            if (is_valid_move(b, {i, j}, newPlayer))
-            {
-                active_side = newPlayer;
-                return true;
-            }
-        }
-    }
-    for (int i = 0; i < board.size(); i++)
-    {
-        for (int j = 0; j < board[i].size(); j++)
-        {
-            if (is_valid_move(b, {i, j}, active_side))
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 void print_score()
 {
     msglog(0, "X : %d", get_score('X'));

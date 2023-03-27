@@ -61,10 +61,6 @@ for percentile in "${percentiles[@]}"; do
     o_percentiles+=($(echo "${o_values[*]}" | tr ' ' '\n' | sort -n | awk -v n=$percentile '{a[NR]=$1} END {print a[int(NR*n/100)]}'))
 done
 
-# Compute IQR
-x_iqr=$((x_percentiles[2] - x_percentiles[0]))
-o_iqr=$((o_percentiles[2] - o_percentiles[0]))
-
 # Write statistics to results.log file
 echo "Mean X value: $mean_x" >> results.log
 echo "Mean O value: $mean_o" >> results.log
@@ -89,9 +85,4 @@ echo "X 75th percentile: ${x_percentiles[2]}" >> results.log
 echo "O 25th percentile: ${o_percentiles[0]}" >> results.log
 echo "O 50th percentile: ${o_percentiles[1]}" >> results.log
 echo "O 75th percentile: ${o_percentiles[2]}" >> results.log
-
-# IQR
-
-echo "X Interquartile Range: $x_iqr" >> results.log
-echo "O Interquartile Range: $o_iqr" >> results.log
 
