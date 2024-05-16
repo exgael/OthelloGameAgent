@@ -1,0 +1,43 @@
+Execution time for game 1: 4.626717718 seconds
+Execution time for game 2: 4.047511027 seconds
+Execution time for game 3: 5.248132979 seconds
+Execution time for game 4: 6.097869820 seconds
+Execution time for game 5: 5.055171622 seconds
+Execution time for game 6: 4.186555775 seconds
+Execution time for game 7: 5.815720166 seconds
+Execution time for game 8: 4.165277338 seconds
+Execution time for game 9: 3.719643274 seconds
+Execution time for game 10: 3.464956736 seconds
+Mean X value: 43
+Mean O value: 20
+X is stronger than O by 23 on average.
+Distribution of X values: 
+2     45
+2     37
+1     54
+1     53
+1     50
+1     43
+1     38
+1     36
+Distribution of O values: 
+2     27
+2     19
+1     28
+1     26
+1     21
+1     14
+1     11
+1     10
+X Median: 44
+O Median: 20
+X Min: 36
+O Min: 10
+X Max: 54
+O Max: 28
+X 25th percentile: 37
+X 50th percentile: 43
+X 75th percentile: 45
+O 25th percentile: 11
+O 50th percentile: 19
+O 75th percentile: 26
